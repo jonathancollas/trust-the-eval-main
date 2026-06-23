@@ -1,22 +1,132 @@
 [
   {
     "type": "local",
-    "id": "mmlu-virology-intrinsic",
+    "id": "mmlu-abstract_algebra-intrinsic",
     "kind": "intrinsic",
-    "benchmark": "MMLU::virology",
+    "benchmark": "MMLU::abstract_algebra",
     "dataset_version": "mmlu-redux-2.0",
-    "path": "evals/mmlu_virology_intrinsic.json",
+    "path": "evals/mmlu_abstract_algebra_intrinsic.json",
     "anchors": {
       "min_rows": 1
     }
   },
   {
     "type": "local",
-    "id": "mmlu-virology-predictions",
+    "id": "mmlu-abstract_algebra-predictions",
     "kind": "predictions",
-    "benchmark": "MMLU::virology",
+    "benchmark": "MMLU::abstract_algebra",
     "dataset_version": "mmlu-redux-2.0",
-    "path": "evals/mmlu_virology_predictions.json",
+    "path": "evals/mmlu_abstract_algebra_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-anatomy-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::anatomy",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_anatomy_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-anatomy-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::anatomy",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_anatomy_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-astronomy-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::astronomy",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_astronomy_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-astronomy-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::astronomy",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_astronomy_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-business_ethics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::business_ethics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_business_ethics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-business_ethics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::business_ethics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_business_ethics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-clinical_knowledge-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::clinical_knowledge",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_clinical_knowledge_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-clinical_knowledge-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::clinical_knowledge",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_clinical_knowledge_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-college_biology-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::college_biology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_biology_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-college_biology-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::college_biology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_biology_predictions.json",
     "anchors": {
       "min_rows": 1
     }
@@ -45,6 +155,336 @@
   },
   {
     "type": "local",
+    "id": "mmlu-college_computer_science-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::college_computer_science",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_computer_science_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-college_computer_science-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::college_computer_science",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_computer_science_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-college_mathematics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::college_mathematics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_mathematics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-college_mathematics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::college_mathematics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_mathematics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-college_medicine-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::college_medicine",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_medicine_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-college_medicine-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::college_medicine",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_medicine_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-college_physics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::college_physics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_physics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-college_physics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::college_physics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_physics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-computer_security-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::computer_security",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_computer_security_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-computer_security-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::computer_security",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_computer_security_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-conceptual_physics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::conceptual_physics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_conceptual_physics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-conceptual_physics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::conceptual_physics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_conceptual_physics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-econometrics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::econometrics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_econometrics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-econometrics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::econometrics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_econometrics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-electrical_engineering-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::electrical_engineering",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_electrical_engineering_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-electrical_engineering-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::electrical_engineering",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_electrical_engineering_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-elementary_mathematics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::elementary_mathematics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_elementary_mathematics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-elementary_mathematics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::elementary_mathematics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_elementary_mathematics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-formal_logic-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::formal_logic",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_formal_logic_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-formal_logic-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::formal_logic",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_formal_logic_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-global_facts-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::global_facts",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_global_facts_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-global_facts-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::global_facts",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_global_facts_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_biology-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_biology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_biology_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_biology-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_biology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_biology_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_chemistry-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_chemistry",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_chemistry_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_chemistry-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_chemistry",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_chemistry_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_computer_science-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_computer_science",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_computer_science_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_computer_science-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_computer_science",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_computer_science_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_european_history-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_european_history",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_european_history_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_european_history-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_european_history",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_european_history_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
     "id": "mmlu-high_school_geography-intrinsic",
     "kind": "intrinsic",
     "benchmark": "MMLU::high_school_geography",
@@ -61,6 +501,754 @@
     "benchmark": "MMLU::high_school_geography",
     "dataset_version": "mmlu-redux-2.0",
     "path": "evals/mmlu_high_school_geography_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_government_and_politics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_government_and_politics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_government_and_politics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_government_and_politics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_government_and_politics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_government_and_politics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_macroeconomics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_macroeconomics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_macroeconomics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_macroeconomics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_macroeconomics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_macroeconomics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_mathematics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_mathematics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_mathematics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_mathematics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_mathematics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_mathematics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_microeconomics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_microeconomics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_microeconomics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_microeconomics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_microeconomics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_microeconomics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_physics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_physics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_physics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_physics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_physics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_physics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_psychology-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_psychology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_psychology_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_psychology-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_psychology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_psychology_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_statistics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_statistics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_statistics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_statistics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_statistics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_statistics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_us_history-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_us_history",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_us_history_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_us_history-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_us_history",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_us_history_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_world_history-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_world_history",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_world_history_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_world_history-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_world_history",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_world_history_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-human_aging-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::human_aging",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_human_aging_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-human_aging-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::human_aging",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_human_aging_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-human_sexuality-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::human_sexuality",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_human_sexuality_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-human_sexuality-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::human_sexuality",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_human_sexuality_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-international_law-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::international_law",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_international_law_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-international_law-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::international_law",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_international_law_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-jurisprudence-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::jurisprudence",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_jurisprudence_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-jurisprudence-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::jurisprudence",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_jurisprudence_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-logical_fallacies-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::logical_fallacies",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_logical_fallacies_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-logical_fallacies-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::logical_fallacies",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_logical_fallacies_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-machine_learning-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::machine_learning",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_machine_learning_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-machine_learning-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::machine_learning",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_machine_learning_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-management-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::management",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_management_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-management-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::management",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_management_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-marketing-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::marketing",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_marketing_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-marketing-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::marketing",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_marketing_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-medical_genetics-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::medical_genetics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_medical_genetics_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-medical_genetics-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::medical_genetics",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_medical_genetics_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-miscellaneous-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::miscellaneous",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_miscellaneous_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-miscellaneous-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::miscellaneous",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_miscellaneous_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-moral_disputes-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::moral_disputes",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_moral_disputes_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-moral_disputes-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::moral_disputes",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_moral_disputes_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-moral_scenarios-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::moral_scenarios",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_moral_scenarios_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-moral_scenarios-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::moral_scenarios",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_moral_scenarios_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-nutrition-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::nutrition",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_nutrition_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-nutrition-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::nutrition",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_nutrition_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-philosophy-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::philosophy",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_philosophy_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-philosophy-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::philosophy",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_philosophy_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-prehistory-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::prehistory",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_prehistory_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-prehistory-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::prehistory",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_prehistory_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-professional_accounting-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::professional_accounting",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_professional_accounting_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-professional_accounting-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::professional_accounting",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_professional_accounting_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-professional_law-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::professional_law",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_professional_law_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-professional_law-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::professional_law",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_professional_law_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-professional_medicine-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::professional_medicine",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_professional_medicine_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-professional_medicine-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::professional_medicine",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_professional_medicine_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-professional_psychology-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::professional_psychology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_professional_psychology_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-professional_psychology-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::professional_psychology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_professional_psychology_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-public_relations-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::public_relations",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_public_relations_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-public_relations-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::public_relations",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_public_relations_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-security_studies-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::security_studies",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_security_studies_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-security_studies-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::security_studies",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_security_studies_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-sociology-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::sociology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_sociology_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-sociology-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::sociology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_sociology_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-us_foreign_policy-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::us_foreign_policy",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_us_foreign_policy_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-us_foreign_policy-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::us_foreign_policy",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_us_foreign_policy_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-virology-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::virology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_virology_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-virology-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::virology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_virology_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-world_religions-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::world_religions",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_world_religions_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-world_religions-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::world_religions",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_world_religions_predictions.json",
     "anchors": {
       "min_rows": 1
     }
