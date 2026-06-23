@@ -1,0 +1,9 @@
+[
+  {"type": "local", "id": "mmlu-redux-virology", "kind": "intrinsic",
+   "benchmark": "MMLU-Redux (Virology)", "dataset_version": "virology/test",
+   "path": "tests/fixtures/mmlu_redux_sample.jsonl",
+   "anchors": {"min_rows": 5, "require_fields": ["error_type"]}},
+  {"type": "local", "id": "leaderboard-demo", "kind": "claim", "benchmark": "MMLU",
+   "path": "tests/fixtures/leaderboard_sample.jsonl",
+   "anchors": {"min_rows": 1, "score_between": [0, 1], "dates_parseable": true}}
+]

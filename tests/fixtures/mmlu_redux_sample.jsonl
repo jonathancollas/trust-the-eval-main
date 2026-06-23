@@ -1,0 +1,10 @@
+{"question": "Which virus is a double-stranded DNA virus?", "choices": ["Influenza", "Herpesvirus", "Poliovirus", "Hepatitis C"], "answer": 1, "error_type": "ok", "subject": "virology"}
+{"question": "The primary reservoir of the Marburg virus is which animal?", "choices": ["Pig", "Fruit bat", "Horse", "Mosquito"], "answer": 0, "error_type": "wrong_groundtruth", "subject": "virology"}
+{"question": "Which of the following is an RNA virus?", "choices": ["Adenovirus", "Papillomavirus", "Rabies virus", "Herpesvirus"], "answer": 3, "error_type": "wrong_groundtruth", "subject": "virology"}
+{"question": "Modus ponens infers Q from which premises?", "choices": ["P and not Q", "If P then Q, and P", "Q and not P", "Not P"], "answer": 1, "error_type": "ok", "subject": "logic"}
+{"question": "Which statement is logically valid?", "choices": ["All A are B", "Some A are B", "No A are B", "Both first and third under one reading"], "answer": 0, "error_type": "multiple_correct_answers", "subject": "logic"}
+{"question": "Is this argument good?", "choices": ["Yes", "No", "Maybe", "Cannot tell"], "answer": 0, "error_type": "bad_question_clarity", "subject": "logic"}
+{"question": "In what year did World War II end?", "choices": ["1918", "1939", "1945", "1962"], "answer": 2, "error_type": "ok", "subject": "history"}
+{"question": "Who was the first president of the United States?", "choices": ["Adams", "Jefferson", "Washington", "Madison"], "answer": 2, "error_type": "ok", "subject": "history"}
+{"question": "What is the derivative of x^2?", "choices": ["x", "2x", "x^2/2", "2"], "answer": 1, "error_type": "ok", "subject": "math"}
+{"question": "What is 7 multiplied by 8?", "choices": ["54", "56", "64", "49"], "answer": 1, "error_type": "ok", "subject": "math"}

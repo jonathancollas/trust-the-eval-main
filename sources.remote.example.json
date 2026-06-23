@@ -1,0 +1,9 @@
+[
+  {"type": "hf_dataset", "id": "mmlu-redux-virology", "kind": "intrinsic",
+   "benchmark": "MMLU-Redux (Virology)", "dataset_version": "virology",
+   "repo": "edinburgh-dawg/mmlu-redux-2.0", "config": "virology", "split": "test",
+   "anchors": {"min_rows": 50, "require_fields": ["error_type"], "label_error_between": [0.30, 0.65]}},
+  {"type": "leaderboard_url", "id": "mmlu-helm", "kind": "claim", "benchmark": "MMLU",
+   "url": "https://YOUR-HOST/mmlu_helm_results.jsonl",
+   "anchors": {"min_rows": 5, "score_between": [0, 1], "dates_parseable": true}}
+]

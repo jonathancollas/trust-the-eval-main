@@ -1,0 +1,68 @@
+[
+  {
+    "type": "local",
+    "id": "mmlu-virology-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::virology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_virology_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-virology-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::virology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_virology_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-college_chemistry-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::college_chemistry",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_chemistry_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-college_chemistry-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::college_chemistry",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_college_chemistry_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_geography-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::high_school_geography",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_geography_intrinsic.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-high_school_geography-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::high_school_geography",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_high_school_geography_predictions.json",
+    "anchors": {
+      "min_rows": 1
+    }
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "dataset": "demo_arithmetic",
+  "model": "demo/model-x",
+  "judge": "demo/model-x",
+  "metadata": {"n_configs": 6, "configs": [0.60, 0.61, 0.59, 0.62, 0.58, 0.71]},
+  "items": [
+    {"question": "What is 2 + 2?",   "answer": "4",  "response": "The answer is 4.",  "score": 1.0, "category": "addition", "human_label": 1},
+    {"question": "What is 3 * 5?",   "answer": "15", "response": "The answer is 15.", "score": 1.0, "category": "multiplication", "human_label": 1},
+    {"question": "What is 2 + 2?",   "answer": "4",  "response": "The answer is 4.",  "score": 1.0, "category": "addition", "human_label": 1},
+    {"question": "What is 10 - 7?",  "answer": "3",  "response": "The answer is 2.",  "score": 0.0, "category": "subtraction", "human_label": 0},
+    {"question": "   ",              "answer": "n/a","response": "",                  "score": 0.0, "category": "addition"},
+    {"question": "What is 6 / 2?",   "answer": "3",  "response": "Possibly 1 2 3 4.", "score": 1.0, "category": "division"},
+    {"question": "What is 8 + 9?",   "answer": "16", "response": "The answer is 17.", "score": 0.0, "category": "addition", "human_label": 0},
+    {"question": "What is 12 - 4?",  "answer": "8",  "response": "The answer is 8.",  "score": 1.0, "category": "subtraction", "human_label": 1}
+  ]
+}

@@ -1,0 +1,33 @@
+# Proposed gen_ai.eval.trust.* attribute registry (v0.1).
+# Namespaced under gen_ai.* so any OpenTelemetry backend ingests them as
+# attributes even before it "understands" them.
+event: gen_ai.eval.trust
+attributes:
+  gen_ai.eval.trust.spec_version:            {type: string,  note: "convention version"}
+  gen_ai.eval.trust.dataset:                 {type: string}
+  gen_ai.eval.trust.n_items:                 {type: int}
+  gen_ai.eval.trust.provenance.hash:         {type: string,  note: "content hash of (question, answer) pairs"}
+  gen_ai.eval.trust.probes_skipped:          {type: string,  note: "comma-separated probe ids skipped (no model)"}
+
+  # contamination
+  gen_ai.eval.trust.contamination.canary_hits:   {type: int}
+  gen_ai.eval.trust.contamination.risk:          {type: double, note: "0..1 (perturbation probe)"}
+
+  # dataset hygiene / construct validity
+  gen_ai.eval.trust.dataset.exact_dups:      {type: int}
+  gen_ai.eval.trust.dataset.near_dups:       {type: int}
+
+  # statistical reliability
+  gen_ai.eval.trust.stat.ci95_pts:           {type: double}
+  gen_ai.eval.trust.stat.min_sig_gap_pts:    {type: double}
+
+  # judge validity
+  gen_ai.eval.trust.judge.kappa:             {type: double}
+  gen_ai.eval.trust.judge.position_bias:     {type: double}
+
+  # sandbagging / eval-awareness
+  gen_ai.eval.trust.sandbagging.delta:       {type: double, note: "capability drop under eval framing"}
+
+  # elicitation / capability-vs-propensity
+  gen_ai.eval.trust.elicitation.gap:         {type: double}
+  gen_ai.eval.trust.refusal.rate:            {type: double}

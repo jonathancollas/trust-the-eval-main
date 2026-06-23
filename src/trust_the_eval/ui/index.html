@@ -1,0 +1,1884 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trust the Eval</title>
+<style>
+:root{
+  --bg:#f7f7f8; --surface:#fff; --border:#e7e7ea; --border-strong:#d4d4d8;
+  --text:#18181b; --muted:#71717a; --muted2:#a1a1aa;
+  --accent:#4f46e5; --accent-weak:#eef2ff; --ink:#111113;
+  --hi-t:#dc2626; --hi-b:#fee2e2; --hi-bg:#fef2f2;
+  --me-t:#c2620a; --me-b:#fde9cf; --me-bg:#fff7ed;
+  --lo-t:#15803d; --lo-b:#dcfce7; --lo-bg:#f0fdf4;
+  --in-t:#52525b; --in-b:#e4e4e7; --in-bg:#f4f4f5;
+  --radius:12px; --radius-sm:8px;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 1px 3px rgba(0,0,0,.06);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+
+/* header */
+header{position:sticky;top:0;z-index:20;background:rgba(247,247,248,.85);
+  backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--border)}
+.bar{max-width:1180px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:14px}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--ink);display:grid;place-items:center;flex:none}
+.logo svg{width:17px;height:17px}
+.brand h1{font-size:16px;margin:0;font-weight:650;letter-spacing:-.01em}
+.brand p{margin:0;font-size:12px;color:var(--muted)}
+.bar .spacer{flex:1}
+.pill{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--border-strong);
+  color:var(--muted);background:var(--surface);white-space:nowrap}
+
+/* layout */
+main{max-width:1180px;margin:0 auto;padding:22px;display:grid;
+  grid-template-columns:368px 1fr;gap:20px;align-items:start}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow)}
+.panel{position:sticky;top:78px}
+.card .pad{padding:18px}
+.step{padding:18px;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:none}
+.step h3{margin:0 0 12px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.step h3 b{color:var(--accent);font-weight:700}
+
+/* tabs */
+.tabs{display:flex;gap:4px;background:var(--in-bg);padding:4px;border-radius:var(--radius-sm);margin-bottom:14px}
+.tabs button{flex:1;border:0;background:transparent;padding:7px;border-radius:6px;font:inherit;
+  color:var(--muted);cursor:pointer;font-weight:550}
+.tabs button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+
+/* dropzone */
+.drop{border:1.5px dashed var(--border-strong);border-radius:var(--radius-sm);padding:22px 14px;
+  text-align:center;cursor:pointer;transition:.15s;color:var(--muted)}
+.drop:hover,.drop.drag{border-color:var(--accent);background:var(--accent-weak);color:var(--text)}
+.drop strong{color:var(--text);display:block;margin-bottom:2px}
+.drop input{display:none}
+.hf-map .hf-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.hf-map .hf-row span{font-size:12px;color:var(--muted);width:118px;flex:none}
+.hf-map .hf-row select{flex:1}
+.hf-note{font-size:11px;color:var(--muted);margin:6px 0 0}
+
+/* doc affordances */
+.docbtn{flex:none;border:1px solid var(--border);background:var(--surface);color:var(--muted);
+  border-radius:6px;width:22px;height:22px;display:grid;place-items:center;cursor:pointer;
+  font-size:12px;font-weight:700;line-height:1}
+.docbtn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-weak)}
+.pc .docbtn{margin-left:6px}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.32);backdrop-filter:blur(2px);z-index:50;display:none}
+.scrim.on{display:block}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(680px,94vw);background:var(--surface);
+  z-index:51;box-shadow:-8px 0 30px rgba(0,0,0,.18);display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .22s ease}
+.drawer.on{transform:translateX(0)}
+.drawer .dhead{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.drawer .dhead .t{flex:1}
+.drawer .dhead h2{margin:0;font-size:16px;font-weight:650;font-family:var(--mono)}
+.drawer .dhead p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+.dclose{border:0;background:transparent;font-size:22px;color:var(--muted);cursor:pointer;line-height:1;padding:4px}
+.dtabs{display:flex;gap:2px;padding:0 14px;border-bottom:1px solid var(--border);background:#fcfcfd;flex:none}
+.dtabs button{border:0;background:transparent;padding:11px 12px;font:inherit;font-weight:600;color:var(--muted);
+  cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.dtabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+.dbody{padding:20px;overflow:auto;flex:1}
+.dsec{display:none}
+.dsec.on{display:block}
+.dsec p{margin:0 0 12px;line-height:1.62}
+.dsec h4{margin:18px 0 8px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.tag-pill{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  padding:2px 8px;border-radius:999px}
+.tag-pill.model{background:var(--accent-weak);color:var(--accent)}
+.tag-pill.static{background:var(--in-bg);color:var(--in-t)}
+
+/* references */
+.ref{padding:10px 0;border-top:1px solid var(--border);font-size:13px}
+.ref:first-of-type{border-top:none}
+.ref .rt{font-weight:600}
+.ref .rm{color:var(--muted);font-size:12px;margin-top:2px}
+.ref .rn{color:var(--text);font-size:12px;margin-top:4px;padding-left:10px;border-left:2px solid var(--accent-weak)}
+.ref a{font-family:var(--mono);font-size:12px}
+
+/* math */
+.math-block{background:#fbfbfd;border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:14px 16px;margin:0 0 12px}
+.math-block .ml{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px}
+.math-render{font-family:Georgia,"Times New Roman",serif;font-size:17px;color:var(--ink);text-align:center;padding:6px 0}
+.mrow{display:inline-flex;align-items:center;gap:.15em;flex-wrap:wrap;justify-content:center}
+.frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;margin:0 .25em}
+.frac .num{padding:0 .4em .12em}
+.frac .den{padding:.12em .4em 0;border-top:1.5px solid var(--ink)}
+.sqrt{display:inline-flex;align-items:flex-start}
+.sqrt>.rad{font-size:1.15em;line-height:1;margin-right:.05em}
+.sqrt>.rnd{border-top:1.5px solid var(--ink);padding:.12em .25em 0}
+.math-latex{margin-top:8px;font-family:var(--mono);font-size:11.5px;color:var(--muted);
+  background:var(--surface);border:1px dashed var(--border-strong);border-radius:6px;padding:6px 8px;
+  white-space:pre-wrap;word-break:break-word}
+.terms{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.terms td{border:1px solid var(--border);padding:6px 9px;vertical-align:top}
+.terms td.sym{font-family:Georgia,serif;font-style:italic;white-space:nowrap;width:84px;background:#fbfbfd}
+.binds{border:1px solid var(--border);border-radius:var(--radius-sm);background:#fbfbfd;padding:10px 12px;margin:0 0 12px}
+.binds.none{color:var(--muted);font-size:12.5px}
+.binds .bh{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.btab{width:100%;border-collapse:collapse;font-size:12.5px}
+.btab td{border:1px solid var(--border);padding:5px 9px}
+.btab .bk{font-family:var(--mono);color:var(--ink);width:58%}
+.btab .bv{font-family:var(--mono);font-weight:600;text-align:right}
+.btab .outrow td{background:#eef2ff;font-weight:700}
+.bnote{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5}
+.thr.fired{background:#eef2ff;border-radius:7px}
+.firedtag{color:var(--accent,#4338ca);font-weight:700;font-size:11px}
+.btab thead th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:#fcfcfd;text-align:left}
+.btab .bk{width:22%}.btab .bv{width:15%;white-space:nowrap}.btab .bs{font-size:11.5px;color:var(--ink)}
+.orig{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.02em;border-radius:5px;padding:1px 6px;margin-right:6px;vertical-align:middle}
+.orig.measured{background:#dcfce7;color:#15803d}
+.orig.parameter{background:#fef3c7;color:#92400e}
+.orig.derived{background:#eef2ff;color:#4338ca}
+
+/* thresholds */
+.thr{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--border)}
+.thr:first-of-type{border-top:none}
+.thr .tw{font-family:var(--mono);font-size:12px;white-space:nowrap;min-width:120px}
+.thr .tm{font-size:13px;color:var(--text)}
+.callout{background:var(--accent-weak);border:1px solid #e0e7ff;border-radius:var(--radius-sm);padding:12px 14px;margin:0 0 14px;font-size:13.5px;line-height:1.6}
+.callout b{color:var(--accent)}
+.caveat{background:var(--me-bg);border:1px solid var(--me-b);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;line-height:1.6;color:#7a4708}
+
+/* code */
+.codewrap{margin:0 0 16px}
+.codewrap .cn{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:6px}
+pre.code{background:#0f1115;color:#e6e6e6;border-radius:var(--radius-sm);padding:14px 16px;overflow:auto;
+  font-family:var(--mono);font-size:12px;line-height:1.55;margin:0}
+.copybar{display:flex;justify-content:flex-end;margin-bottom:6px}
+
+/* inline help */
+.help{font-size:11.5px;color:var(--muted);margin:5px 0 0;line-height:1.5}
+.help b{color:var(--text);font-weight:600}
+.helpbtn{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:999px;
+  border:1px solid var(--border-strong);color:var(--muted);font-size:10px;font-weight:700;
+  cursor:help;margin-left:5px;vertical-align:middle}
+.fld-row{display:flex;align-items:center;gap:0}
+
+/* probe quick filter */
+.pfilter{display:flex;gap:6px;margin:2px 0 10px}
+.pfilter button{flex:1;border:1px solid var(--border-strong);background:var(--surface);color:var(--muted);
+  padding:5px;border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.pfilter button.on{border-color:var(--ink);background:var(--ink);color:#fff}
+
+/* model access sub-fields */
+.subfld{margin-top:10px}
+.keyrow{display:flex;gap:6px;align-items:center}
+.keyrow input{flex:1}
+.keystate{font-size:11.5px;margin-top:6px}
+
+/* HF explorer */
+.hf-search{display:flex;gap:6px}
+.hf-results{margin-top:10px;max-height:260px;overflow:auto;border:1px solid var(--border);
+  border-radius:var(--radius-sm)}
+.hf-ds{display:flex;align-items:center;gap:8px;padding:9px 11px;border-bottom:1px solid var(--border);
+  cursor:pointer}
+.hf-ds:last-child{border-bottom:none}
+.hf-ds:hover{background:var(--accent-weak)}
+.hf-ds .id{font-family:var(--mono);font-size:12.5px;font-weight:600;flex:1;word-break:break-all}
+.hf-ds .meta{font-size:11px;color:var(--muted);white-space:nowrap}
+.hf-ds .gated{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--me-t);
+  background:var(--me-bg);border:1px solid var(--me-b);border-radius:999px;padding:1px 6px}
+.sortrow{display:flex;gap:6px;align-items:center;margin-top:8px}
+.sortrow label{font-size:11px;color:var(--muted)}
+.sortrow select{flex:none;width:auto;padding:4px 8px;font-size:12px}
+
+/* explorer drawer table */
+.exp-toolbar{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--border);
+  background:#fcfcfd;flex:none;flex-wrap:wrap}
+.exp-toolbar .nav{display:flex;gap:6px;align-items:center;margin-left:auto}
+.exp-meta{font-size:12px;color:var(--muted)}
+table.items{width:100%;border-collapse:collapse;font-size:12.5px}
+table.items th{position:sticky;top:0;background:var(--in-bg);text-align:left;padding:8px 10px;
+  border-bottom:1px solid var(--border-strong);font-weight:600;color:var(--muted);z-index:1}
+table.items td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+table.items td.q{max-width:340px}
+table.items .sc{font-family:var(--mono);font-weight:600}
+table.items .sc.ok{color:var(--lo-t)} table.items .sc.no{color:var(--hi-t)}
+table.items .resp{color:var(--muted);max-width:280px}
+table.items .opt{display:inline-block;font-size:10px;background:var(--in-bg);border:1px solid var(--border);
+  border-radius:4px;padding:1px 5px;margin:1px}
+.exp-empty{padding:30px;text-align:center;color:var(--muted2)}
+
+/* inputs */
+label.fld{display:block;font-size:12px;color:var(--muted);margin:0 0 5px}
+.row{display:flex;gap:10px}
+.row>div{flex:1}
+input[type=text],input[type=number],select{width:100%;padding:8px 10px;border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);font:inherit;background:var(--surface);color:var(--text)}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
+
+/* segmented */
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.seg button{border:1px solid var(--border-strong);background:var(--surface);padding:8px 4px;border-radius:var(--radius-sm);
+  font:inherit;cursor:pointer;color:var(--muted);font-weight:550}
+.seg button.on{border-color:var(--ink);background:var(--ink);color:#fff}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:var(--radius-sm);
+  font:inherit;font-weight:600;cursor:pointer;padding:9px 14px;border:1px solid var(--border-strong);
+  background:var(--surface);color:var(--text)}
+.btn:hover{background:#fafafa}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);width:100%;padding:11px}
+.btn.primary:hover{background:#000}
+.btn.primary:disabled{background:var(--muted2);border-color:var(--muted2);cursor:not-allowed}
+.btn.ghost{border-color:transparent;color:var(--muted);padding:6px 8px}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn-row{display:flex;gap:8px;margin-top:6px}
+
+/* loaded summary */
+.summary{margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fcfcfd}
+.summary .name{font-weight:600;margin-bottom:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--in-bg);color:var(--in-t);border:1px solid var(--in-b)}
+.chip.ok{background:var(--lo-bg);color:var(--lo-t);border-color:var(--lo-b)}
+.chip.no{background:var(--hi-bg);color:var(--hi-t);border-color:var(--hi-b)}
+
+/* probe customize */
+.probe-groups{margin-top:10px;border-top:1px solid var(--border);padding-top:10px;display:none}
+.pg{margin-bottom:10px}
+.pg h4{margin:0 0 6px;font-size:12px;color:var(--text)}
+.pc{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px;color:var(--text)}
+.pc input{accent-color:var(--accent)}
+.pc .tag{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:999px;border:1px solid var(--border)}
+.pc .tag.model{color:var(--accent);border-color:var(--accent)}
+.pc .tag.static{color:var(--muted)}
+
+/* results */
+.empty{display:grid;place-items:center;min-height:300px;color:var(--muted2);text-align:center;padding:40px}
+.empty svg{width:42px;height:42px;opacity:.5;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:12px;margin-bottom:16px}
+.stat{padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+.stat .v{font-size:22px;font-weight:680;letter-spacing:-.02em}
+.stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.stat.hi .v{color:var(--hi-t)} .stat.me .v{color:var(--me-t)}
+.stat.lo .v{color:var(--lo-t)} .stat.in .v{color:var(--in-t)}
+
+/* progress */
+.prog{height:6px;border-radius:999px;background:var(--in-bg);overflow:hidden;margin:4px 0 6px}
+.prog>span{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.prog-line{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:14px}
+
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.sevfilter{display:flex;gap:6px}
+.sevtog{font-size:12px;padding:5px 10px;border-radius:999px;cursor:pointer;border:1px solid var(--border);
+  background:var(--surface);color:var(--muted);user-select:none;font-weight:600}
+.sevtog.on.hi{background:var(--hi-bg);color:var(--hi-t);border-color:var(--hi-b)}
+.sevtog.on.me{background:var(--me-bg);color:var(--me-t);border-color:var(--me-b)}
+.sevtog.on.lo{background:var(--lo-bg);color:var(--lo-t);border-color:var(--lo-b)}
+.sevtog.on.in{background:var(--in-bg);color:var(--in-t);border-color:var(--in-b)}
+.toolbar .grow{flex:1;min-width:120px}
+.toolbar input[type=text]{padding:7px 10px}
+
+/* findings */
+.finding{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;background:var(--surface);overflow:hidden}
+.fhead{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer}
+.fhead:hover{background:#fcfcfd}
+.dot{width:9px;height:9px;border-radius:999px;flex:none}
+.dot.hi{background:var(--hi-t)} .dot.me{background:var(--me-t)}
+.dot.lo{background:var(--lo-t)} .dot.in{background:var(--muted2)}
+.fid{font-weight:600;font-family:var(--mono);font-size:12.5px;flex:none}
+.fsum{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fscore{margin-left:auto;font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:999px;
+  background:var(--in-bg);color:var(--in-t);flex:none}
+.sevbadge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:999px;flex:none}
+.sevbadge.hi{background:var(--hi-bg);color:var(--hi-t)} .sevbadge.me{background:var(--me-bg);color:var(--me-t)}
+.sevbadge.lo{background:var(--lo-bg);color:var(--lo-t)} .sevbadge.in{background:var(--in-bg);color:var(--in-t)}
+.caret{flex:none;color:var(--muted2);transition:transform .2s}
+.finding.open .caret{transform:rotate(90deg)}
+.fbody{display:none;padding:0 13px 13px;border-top:1px solid var(--border)}
+.finding.open .fbody{display:block}
+.fbody .sumfull{padding:10px 0;color:var(--text)}
+.attrs{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.attr{font-family:var(--mono);font-size:11px;background:var(--accent-weak);color:var(--accent);
+  padding:2px 8px;border-radius:6px;border:1px solid #e0e7ff}
+.ev{margin-top:6px}
+.ev h5{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+table.evt{width:100%;border-collapse:collapse;font-size:12px}
+table.evt th,table.evt td{border:1px solid var(--border);padding:5px 8px;text-align:left;vertical-align:top}
+table.evt th{background:var(--in-bg);font-weight:600;color:var(--muted)}
+table.evt td.mono{font-family:var(--mono)}
+.kv{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.kv b{color:var(--text);font-weight:600}
+
+/* skipped / errors */
+.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:18px 0 8px}
+.skip-note{font-size:12px;color:var(--muted);margin-bottom:8px}
+.skips{display:flex;flex-wrap:wrap;gap:6px}
+.skips .chip{background:var(--surface);border-style:dashed}
+.err{border:1px solid var(--hi-b);background:var(--hi-bg);color:var(--hi-t);border-radius:var(--radius-sm);
+  padding:8px 11px;font-size:13px;margin-bottom:6px;font-family:var(--mono)}
+.foot{max-width:1180px;margin:0 auto;padding:8px 22px 30px;color:var(--muted2);font-size:12px}
+.spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:999px;
+  display:inline-block;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* ---- calibration view ---- */
+.pill-btn{cursor:pointer;font-weight:600;color:#fff;background:rgba(255,255,255,.16);
+  border-color:rgba(255,255,255,.28)}
+.pill-btn:hover{background:rgba(255,255,255,.26)}
+#calib-drawer{width:min(1040px,97vw)}
+.cal-kpis{display:flex;gap:10px;flex-wrap:wrap;padding:16px 20px;background:linear-gradient(180deg,#1e1b4b,#312e81);color:#fff}
+.cal-kpi{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);border-radius:9px;padding:9px 13px;min-width:120px}
+.cal-kpi .v{font-size:20px;font-weight:700}
+.cal-kpi .l{font-size:10px;opacity:.82;text-transform:uppercase;letter-spacing:.4px}
+.cal-kpi .c{font-size:10px;opacity:.7}
+.cal-body{padding:16px 20px;overflow:auto}
+.cal-intro{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+.cal-bright{background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:10px 13px;font-size:12.5px;color:#3730a3;margin:0 0 16px}
+.cov-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 18px}
+.cov-box{border:1px solid var(--border);border-radius:9px;padding:12px;background:var(--surface)}
+.cov-box .cnt{font-size:20px;font-weight:700}
+.cov-box h4{margin:0 0 4px;font-size:12.5px}
+.cov-box p{margin:5px 0 0;font-size:11px;color:var(--muted);line-height:1.45}
+.cal-filter{display:flex;gap:6px;margin:0 0 14px;flex-wrap:wrap}
+.cal-filter button{border:1px solid var(--border-strong);background:var(--surface);color:var(--muted);
+  padding:6px 11px;border-radius:999px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.cal-filter button.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.cal-card{border:1px solid var(--border);border-radius:11px;padding:15px;margin:0 0 12px;background:var(--surface)}
+.cal-card .ch{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.cal-card .ch h3{margin:0;font-family:var(--mono);font-size:14px;font-weight:650}
+.cal-card .ch .kind{font-size:10.5px;color:var(--muted)}
+.cal-tier{font-size:10px;font-weight:700;color:#fff;padding:2px 8px;border-radius:20px;margin-left:auto;white-space:nowrap}
+.cal-basis{font-size:11.5px;color:var(--muted);margin:0 0 9px;line-height:1.45}
+.cal-mrow{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;margin-bottom:8px}
+.cal-mrow .m b{font-size:13px}
+.cal-mrow .ci{color:var(--muted);font-size:10.5px}
+.cal-curves{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0}
+.cal-curves svg{max-width:300px;height:auto;border:1px solid var(--border);border-radius:6px;background:#fff}
+.cal-curve-empty{font-size:12px;color:var(--muted);padding:8px 0}
+.cal-reg{font-size:11.5px;color:var(--muted);margin-top:6px}
+.cal-reg code{font-size:11px}
+.cal-caveat{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 11px;margin-top:9px}
+.cal-caveat .h{font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.4px}
+.cal-caveat p{margin:4px 0 0;font-size:11.5px;color:#78350f;line-height:1.45}
+.cal-loading{padding:40px;text-align:center;color:var(--muted)}
+.cal-limits{border-top:1px solid var(--border);margin-top:18px;padding-top:14px;font-size:12px;color:var(--muted);line-height:1.55}
+.cal-limits b{color:var(--text)}
+/* ============ Phase 1: synthesis + calibrated findings ============ */
+.synth{border:1px solid var(--border);border-radius:11px;background:var(--surface);padding:14px 16px;margin:0 0 12px}
+.synth-frame{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 12px;border-left:3px solid var(--border-strong);padding-left:10px}
+.synth-frame a{color:var(--accent,#4338ca);cursor:pointer;text-decoration:none}
+.synth-frame a:hover{text-decoration:underline}
+.synth-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#52525b;margin:0 0 8px}
+.synth-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:0 0 14px}
+.sj{border:1px solid var(--border);border-radius:9px;padding:8px 10px;background:var(--bg,#fafafa)}
+.sj .jn{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+.sj .jc{font-size:11px;color:var(--muted);margin-top:3px}
+.sj.clean{opacity:.6}
+.threats{display:flex;flex-direction:column;gap:8px;margin:0 0 12px}
+.threat{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-left-width:4px;border-radius:8px;padding:9px 12px;background:#fff}
+.threat .tx{flex:1;min-width:0}
+.threat .tt{font-size:13px;font-weight:600;font-family:var(--mono);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.threat .ts{font-size:12px;color:#3f3f46;margin-top:3px;line-height:1.45}
+.threat .tc{font-size:10.5px;color:var(--muted);margin-top:5px}
+.threat .tc b{color:#52525b}
+.claim-row{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);align-items:center}
+.claim-row .cl{border:1px solid var(--border);border-radius:20px;padding:3px 10px;background:var(--bg,#fafafa)}
+.claim-row .cl b{color:var(--text)}
+.claim-row .cl.hot{border-color:#fca5a5;background:#fef2f2;color:#991b1b}
+.claim-row .cl.hot b{color:#991b1b}
+/* tier badge (shared palette with calibration drawer) */
+.tierbadge{font-size:9.5px;font-weight:700;color:#fff;padding:1px 7px;border-radius:20px;white-space:nowrap}
+.tier-real{background:#15803d}.tier-structural{background:#1d4ed8}.tier-behavioral{background:#b45309}
+/* per-finding reliability + remediation + claims */
+.frel{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12px;background:var(--bg,#f8f8f8);border:1px solid var(--border);border-radius:7px;padding:8px 11px;margin:10px 0 0}
+.frel .rl{color:var(--muted)}.frel b{font-size:12.5px}
+.frel .seecal{margin-left:auto;color:var(--accent,#4338ca);cursor:pointer;font-size:11.5px;white-space:nowrap}
+.frel .seecal:hover{text-decoration:underline}
+.frel.untested{background:#fffbeb;border-color:#fde68a}
+.fremedy{font-size:12px;color:#3f3f46;margin:9px 0 0;line-height:1.45}
+.fremedy .h{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#0e7490;margin-right:6px}
+.fclaims{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0 0}
+.cchip{font-size:10.5px;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:2px 8px}
+/* second filter row */
+.filt2{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 4px;padding-top:10px;border-top:1px solid var(--border)}
+.filt2 .lbl{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--muted)}
+.filt2 select{font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);color:var(--text)}
+.tierchip{font-size:11px;font-weight:600;border:1px solid var(--border-strong);border-radius:20px;padding:3px 10px;cursor:pointer;color:var(--muted);background:var(--surface)}
+.tierchip.on{color:#fff;border-color:transparent}
+.tierchip.on[data-tier="all"]{background:#3f3f46}
+.tierchip.on[data-tier="real_labeled"]{background:#15803d}
+.tierchip.on[data-tier="structural_exact"]{background:#1d4ed8}
+.tierchip.on[data-tier="behavioral_synthetic"]{background:#b45309}
+@keyframes calflash{0%{box-shadow:0 0 0 3px rgba(67,56,202,.0)}30%{box-shadow:0 0 0 3px rgba(67,56,202,.45)}100%{box-shadow:0 0 0 3px rgba(67,56,202,0)}}
+.cal-flash{animation:calflash 1.6s ease-out}
+/* ---- Phase 2: per-claim verdict panel ---- */
+.cv-wrap{border:1px solid var(--border);border-radius:11px;background:var(--surface);padding:14px 16px;margin:0 0 12px}
+.cv-frame{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 12px;border-left:3px solid var(--border-strong);padding-left:10px}
+.cv-frame b{color:var(--text)}
+.cv-frame a{color:var(--accent,#4338ca);cursor:pointer;text-decoration:none}.cv-frame a:hover{text-decoration:underline}
+.cv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.cv-card{border:1px solid var(--border);border-top-width:3px;border-radius:9px;padding:11px 12px;background:#fff;cursor:pointer;transition:box-shadow .12s}
+.cv-card:hover{box-shadow:0 1px 8px rgba(0,0,0,.07)}
+.cv-card.active{box-shadow:0 0 0 2px var(--accent,#4338ca)}
+.cv-card.sup{border-top-color:#16a34a}.cv-card.fra{border-top-color:#d97706}.cv-card.uns{border-top-color:#dc2626}
+.cv-claim{font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.cv-claim .n{font-size:10.5px;color:var(--muted);font-weight:400}
+.cv-badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px;margin:7px 0 6px;text-transform:uppercase;letter-spacing:.3px}
+.cv-badge.sup{background:#dcfce7;color:#15803d}.cv-badge.fra{background:#fef3c7;color:#92400e}.cv-badge.uns{background:#fee2e2;color:#b91c1c}
+.cv-mean{font-size:11.5px;color:#52525b;line-height:1.45;margin:0 0 7px}
+.cv-th{font-size:11px;color:#3f3f46;display:flex;gap:6px;align-items:baseline;margin:3px 0;line-height:1.4}
+.cv-th .pid{font-family:var(--mono);font-weight:600;font-size:10.5px}
+.cv-th .sd{width:7px;height:7px;border-radius:50%;flex:none;margin-top:3px}
+.cv-th .sd.hi{background:var(--hi-t)}.cv-th .sd.me{background:var(--me-t)}
+.cv-none{font-size:11.5px;color:#15803d}
+.cv-rel{color:var(--muted);font-size:10px}
+/* ---- Phase 2: A/B compare ---- */
+.trustbtn{font-weight:700;border-color:#4338ca;color:#4338ca}
+.cmpsep{width:1px;align-self:stretch;background:var(--border);margin:0 2px}
+.pinpill{font-size:11px;border:1px solid #c7d2fe;background:#eef2ff;color:#3730a3;border-radius:20px;padding:3px 10px;white-space:nowrap}
+.pinpill a{cursor:pointer;font-weight:700;margin-left:4px;color:#3730a3}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cmp{border:1px solid #c7d2fe;border-radius:11px;background:linear-gradient(180deg,#fbfbff,#fff);padding:14px 16px;margin:0 0 12px}
+.cmp-head{display:flex;align-items:center;gap:10px}
+.cmp-head h3{margin:0;font-size:14px;flex:1}
+.cmp-frame{font-size:11.5px;color:var(--muted);margin:6px 0 12px;line-height:1.5}
+.cmp-row{display:grid;grid-template-columns:minmax(140px,1.2fr) auto auto 1fr;gap:12px;align-items:center;margin:7px 0;font-size:12.5px}
+.cmp-lab{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmp-acc{font-family:var(--mono);font-weight:700;font-size:14px}
+.cmp-ci{color:var(--muted);font-size:11px;white-space:nowrap}
+.cmp-track{position:relative;height:10px;background:var(--in-bg,#f1f1f4);border-radius:999px;min-width:120px}
+.cmp-int{position:absolute;top:0;height:100%;background:#c7d2fe;border-radius:999px}
+.cmp-pt{position:absolute;top:-2px;width:3px;height:14px;background:#4338ca;border-radius:2px;transform:translateX(-50%)}
+.cmp-gap{font-size:12.5px;border-radius:8px;padding:9px 12px;margin:10px 0;line-height:1.5}
+.cmp-gap.real{background:#dcfce7;border:1px solid #bbf7d0;color:#14532d}
+.cmp-gap.noise{background:#fef3c7;border:1px solid #fde68a;color:#713f12}
+.cmp-verdict{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-radius:9px;padding:10px 12px;background:var(--surface);font-size:12.5px}
+.cmp-verdict ul{margin:4px 0 0;padding-left:18px;color:#3f3f46;font-size:12px}
+.cmp-verdict li{margin:2px 0}
+.cmp-claims{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.cmp-claim{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;background:#fff}
+.cmp-claim .n{font-weight:600;flex:1}
+.cmp-claim .side{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:10.5px}
+.cmp-probes{display:flex;flex-direction:column;gap:5px}
+.cmp-prow{display:grid;grid-template-columns:minmax(180px,1.4fr) auto auto auto;gap:10px;align-items:center;font-size:12px;border:1px solid var(--border);border-radius:7px;padding:5px 10px;background:#fff}
+.cmp-prow .arr{font-size:11px;font-weight:700;text-align:center;min-width:48px}
+.cmp-prow .arr.worse{color:#dc2626}.cmp-prow .arr.better{color:#15803d}.cmp-prow .arr.same{color:var(--muted)}
+.cmp-prow .arr.a_only,.cmp-prow .arr.b_only{color:#52525b;font-size:10px}
+/* ---- analytical views (registry) ---- */
+.vizcard{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:10px 12px;margin:0 0 10px}
+.vizhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.vizhead .vt{font-size:12.5px;font-weight:600}
+.vtoggle{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
+.vizbody{margin-top:4px}
+.vizempty{font-size:12px;color:var(--muted);padding:8px 2px}
+.vizoff{font-size:11.5px;color:var(--muted);margin:2px 0 8px}
+.vizoff a{color:var(--accent,#4338ca);cursor:pointer;font-weight:600}
+.vizlegend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:8px}
+.vizlegend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.vizlegend .g{color:#9ca3af}
+table.triage{border-collapse:collapse;width:100%;margin-top:4px}
+table.triage th,table.triage td{border:1px solid var(--border);padding:7px 8px;text-align:left;vertical-align:top;font-size:11.5px}
+table.triage thead th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:#fcfcfd;font-weight:700}
+table.triage th.corner{color:#9ca3af;text-transform:none;letter-spacing:0;font-weight:500}
+table.triage th.sevh{white-space:nowrap;font-weight:700;width:64px}
+th.sevh.high{color:#b91c1c}th.sevh.medium{color:#c2620a}th.sevh.low{color:#15803d}
+table.triage td.act{background:#dcfce7}table.triage td.inv{background:#fef3c7}
+.pchip{display:inline-block;font-family:var(--mono);font-size:10.5px;background:#eef0f2;border-radius:5px;padding:1px 6px;margin:2px 3px 0 0}
+td.act .pchip{background:#bbf7d0}td.inv .pchip{background:#fde68a}
+.triage .empty{color:#d1d5db}
+.vizlegend .key{font-weight:700;border-radius:5px;padding:1px 6px;margin-right:5px}
+.vizlegend .key.act{background:#dcfce7;color:#15803d}.vizlegend .key.inv{background:#fef3c7;color:#92400e}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z" fill="#fff" opacity=".15"/><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.5 12l2.4 2.4 4.6-4.8" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="brand">
+      <h1>Trust the Eval</h1>
+      <p>Red-teams the validity of an evaluation result — not the safety of a model.</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="pill pill-btn" id="calib-open" onclick="openCalibration()" title="Measured precision/recall of every probe against known ground truth" aria-label="Calibration">✓ Calibration</button>
+    <span class="pill" id="probe-count">— probes</span>
+    <span class="pill">local · offline</span>
+  </div>
+</header>
+
+<main>
+  <!-- ============ CONTROL PANEL ============ -->
+  <section class="card panel">
+    <!-- step 1 -->
+    <div class="step">
+      <h3><b>1</b> &nbsp;Dataset</h3>
+      <div class="tabs">
+        <button id="tab-upload" class="on" onclick="setTab('upload')">Upload eval</button>
+        <button id="tab-synth" onclick="setTab('synth')">Synthetic demo</button>
+        <button id="tab-pull" onclick="setTab('pull')">HuggingFace<span style="font-size:9px;opacity:.55;margin-left:3px;letter-spacing:.04em">EXP</span></button>
+      </div>
+
+      <div id="pane-synth" style="display:none">
+        <div class="row">
+          <div><label class="fld">Items
+            <span class="helpbtn" title="How many synthetic rows to generate for the demo dataset. More items generally give more stable probe signals but take longer to run.">?</span>
+          </label><input type="number" id="gen-n" value="160" min="8" max="5000"></div>
+        </div>
+        <details style="margin-top:8px">
+          <summary class="muted" style="font-size:12px;cursor:pointer">Advanced options</summary>
+          <div style="margin-top:10px;max-width:220px">
+            <label class="fld">Seed
+              <span class="helpbtn" title="The seed makes generation reproducible. The same (items, seed) always produces the exact same dataset — same questions, same injected defects, same order. Change it to get a different-but-equivalent dataset; keep it fixed to compare runs or reproduce a result. (The seed also drives deterministic item sampling inside the probes.)">?</span>
+            </label>
+            <input type="number" id="gen-seed" value="7">
+          </div>
+        </details>
+        <div class="btn-row"><button class="btn sm" style="flex:1" onclick="loadSynthetic()">Generate dataset</button></div>
+        <p class="help">Arithmetic eval with known defects baked in (duplicates, a canary, wrong labels, mis-scores, answer leaks, cherry-picked configs) so every probe has something real to find. <b>Items</b> controls sample size; <b>Seed</b> (Advanced) controls reproducibility: same seed → identical dataset.</p>
+      </div>
+
+      <div id="pane-pull" style="display:none">
+        <p class="help" style="margin-top:0"><b>Experimental.</b> Best-effort import via the HF Dataset Viewer — dataset schemas vary wildly, so the field mapping often needs hand-tuning. For dependable results, prefer an <b>Inspect</b> or <b>promptfoo</b> export in the <b>Upload eval</b> tab.</p>
+        <label class="fld">Search the Hugging Face Hub
+          <span class="helpbtn" title="Type keywords to browse public datasets on Hugging Face. Click a result to load its structure. You can also paste an exact dataset id (e.g. openai/gsm8k) into the box and press Enter.">?</span>
+        </label>
+        <div class="hf-search">
+          <input type="text" id="hf-search-q" placeholder="search datasets… e.g. gsm8k, mmlu, math" onkeydown="if(event.key==='Enter')hfSearch()">
+          <button class="btn sm" onclick="hfSearch()">Search</button>
+        </div>
+        <div class="sortrow">
+          <label>sort</label>
+          <select id="hf-sort" onchange="hfSearch()">
+            <option value="downloads">most downloaded</option>
+            <option value="likes">most liked</option>
+            <option value="lastModified">recently updated</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
+            <input type="checkbox" id="hf-relevant" checked onchange="hfSearch()">
+            relevant eval-style datasets only
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
+            <input type="checkbox" id="hf-results" onchange="hfSearch()">
+            eval results only (scores/responses)
+          </label>
+          <span class="help" style="margin:0">or paste an exact id below ↓</span>
+        </div>
+        <div id="hf-results"></div>
+
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <input type="text" id="hf-dataset" placeholder="exact id, e.g. openai/gsm8k" style="flex:1" onkeydown="if(event.key==='Enter')hfInspect()">
+          <button class="btn sm" id="hf-inspect-btn" onclick="hfInspect()">Load structure</button>
+        </div>
+        <p class="help" id="hf-presets-hint" style="margin-top:8px">Quick picks:
+          <a href="#" onclick="hfQuick('openai/gsm8k','main','test');return false">gsm8k</a> ·
+          <a href="#" onclick="hfQuick('cais/mmlu','all','test');return false">mmlu</a> ·
+          <a href="#" onclick="hfQuick('truthfulqa/truthful_qa','multiple_choice','validation');return false">truthful_qa</a> ·
+          <a href="#" onclick="hfQuick('Rowan/hellaswag','default','validation');return false">hellaswag</a>
+        </p>
+
+        <div id="hf-config-area" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+          <div id="hf-format" style="margin-bottom:12px"></div>
+          <div class="row">
+            <div><label class="fld">Subset</label><select id="hf-config" onchange="hfReinspect()"></select></div>
+            <div><label class="fld">Split</label><select id="hf-split" onchange="hfReinspect()"></select></div>
+            <div style="max-width:90px"><label class="fld">Rows</label><input type="number" id="hf-n" value="100" min="1" max="2000"></div>
+          </div>
+          <div id="hf-mapping" style="margin-top:12px"></div>
+          <div id="hf-sample" style="margin-top:10px"></div>
+          <button class="btn primary" id="hf-fetch-btn" style="margin-top:12px" onclick="hfPull()" disabled>Fetch dataset</button>
+        </div>
+
+        <details style="margin-top:12px">
+          <summary class="muted" style="font-size:12px;cursor:pointer">Access token (gated / private datasets)</summary>
+          <input type="password" id="hf-token" placeholder="hf_… (optional, sent per-request, never stored)" style="margin-top:8px">
+        </details>
+      </div>
+
+
+      <div id="pane-upload">
+        <div class="drop" id="drop" onclick="document.getElementById('file').click()">
+          <strong>Drop an eval result</strong>
+          <span class="muted">Inspect <code>.eval</code> log · promptfoo results <code>.json</code> · generic JSON</span>
+          <input type="file" id="file" accept=".json,.eval,.zip">
+        </div>
+        <p class="help" style="margin-top:10px">First-class support for <b>Inspect</b> logs (<code>.eval</code>) — including <b>UK AISI</b> evals and any <code>inspect-ai</code> output — and <b>promptfoo</b> result exports (auto-detected by content, regardless of filename). Generic JSON carrying <code>question / answer / response / score</code> fields also loads. Files are parsed in-process — nothing leaves your machine.</p>
+      </div>
+
+      <div class="summary" id="summary" style="display:none"></div>
+    </div>
+
+    <!-- step 2 -->
+    <div class="step">
+      <h3><b>2</b> &nbsp;Model access
+        <span class="helpbtn" title="Model-in-the-loop probes need a model to query the eval's items. 'None' runs only the 8 static probes. 'Demo' uses a built-in synthetic model (no network) just to try the tool. 'API-compatible' uses one endpoint mode with presets (OpenAI, Anthropic-compatible gateways, Ollama, LM Studio, vLLM).">?</span>
+      </h3>
+      <div class="seg" id="modeseg" style="grid-template-columns:repeat(3,1fr)">
+        <button class="on" data-mode="none" onclick="setMode('none')">None</button>
+        <button data-mode="demo" onclick="setMode('demo')">Demo (synthetic)</button>
+        <button data-mode="api" onclick="setMode('api')">API-compatible</button>
+      </div>
+      <div id="mode-extra" style="margin-top:12px"></div>
+      <p class="help" id="mode-note">Static-only: 8 probes run, 12 model-in-the-loop probes are skipped (that is where the strongest signal lives).</p>
+    </div>
+
+    <!-- step 3 -->
+    <div class="step">
+      <h3><b>3</b> &nbsp;Probes</h3>
+      <div class="pfilter" id="pfilter">
+        <button class="on" data-f="all" onclick="probeFilter('all')">All (20)</button>
+        <button data-f="static" onclick="probeFilter('static')">Static (8)</button>
+        <button data-f="model" onclick="probeFilter('model')">Model (12)</button>
+      </div>
+      <div class="pc"><input type="checkbox" id="all-probes" checked onchange="toggleAll()"><label for="all-probes" style="font-weight:600;cursor:pointer">Select all (visible)</label><span class="tag" id="sel-count">20</span></div>
+      <button class="btn ghost sm" onclick="toggleCustomize()" id="cust-btn" style="margin-top:4px">Customize selection ▾</button>
+      <div class="probe-groups" id="probe-groups"></div>
+    </div>
+
+    <!-- run -->
+    <div class="step">
+      <button class="btn primary" id="run-btn" disabled onclick="run()">Run battery</button>
+      <button class="btn" id="stop-btn" style="display:none;width:100%;margin-top:8px" onclick="stop()">Stop</button>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section id="results">
+    <div class="card"><div class="empty" id="empty">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      <div><strong>No results yet</strong><br>Generate or upload a dataset, then run the battery.<p class="help" style="margin:6px 0 0">ROC/PR curves live in ✓ Calibration. Run results visualize severity mix, probe scores, run coverage, and progress — not classification curves.</p></div>
+    </div></div>
+  </section>
+</main>
+<div class="foot">Trust the Eval · every probe assesses whether an eval <em>result</em> can be trusted as a measurement. Detection only — never a recipe to attack a model or game an eval.</div>
+
+<div class="scrim" id="scrim" onclick="closeDoc()"></div>
+<aside class="drawer" id="drawer" aria-label="Probe documentation">
+  <div class="dhead">
+    <div class="t"><h2 id="d-id">probe</h2><p id="d-sub"></p></div>
+    <button class="dclose" onclick="closeDoc()" title="Close">&times;</button>
+  </div>
+  <div class="dtabs">
+    <button class="on" data-d="science" onclick="docTab('science')">Science</button>
+    <button data-d="math" onclick="docTab('math')">Math</button>
+    <button data-d="interp" onclick="docTab('interp')">Interpretation</button>
+    <button data-d="code" onclick="docTab('code')">Code</button>
+  </div>
+  <div class="dbody">
+    <div class="dsec on" id="dsec-science"></div>
+    <div class="dsec" id="dsec-math"></div>
+    <div class="dsec" id="dsec-interp"></div>
+    <div class="dsec" id="dsec-code"></div>
+  </div>
+</aside>
+
+<div class="scrim" id="exp-scrim" onclick="closeExplorer()"></div>
+<aside class="drawer" id="exp-drawer" aria-label="Dataset explorer" style="width:min(900px,96vw)">
+  <div class="dhead">
+    <div class="t"><h2 id="exp-title">Dataset</h2><p id="exp-sub"></p></div>
+    <button class="dclose" onclick="closeExplorer()" title="Close">&times;</button>
+  </div>
+  <div class="exp-toolbar">
+    <span class="exp-meta" id="exp-meta"></span>
+    <div class="nav">
+      <button class="btn sm" id="exp-prev" onclick="expPage(-1)">‹ Prev</button>
+      <span class="exp-meta" id="exp-range"></span>
+      <button class="btn sm" id="exp-next" onclick="expPage(1)">Next ›</button>
+    </div>
+  </div>
+  <div class="dbody" id="exp-body" style="padding:0"></div>
+</aside>
+
+<div class="scrim" id="calib-scrim" onclick="closeCalibration()"></div>
+<aside class="drawer" id="calib-drawer" aria-label="Probe calibration">
+  <div class="dhead">
+    <div class="t"><h2>Probe calibration</h2><p id="calib-sub">measured precision &amp; recall vs known ground truth</p></div>
+    <button class="dclose" onclick="closeCalibration()" title="Close">&times;</button>
+  </div>
+  <div id="calib-kpis" class="cal-kpis"></div>
+  <div class="cal-body" id="calib-content">
+    <div class="cal-loading">Measuring every probe against ground truth…</div>
+  </div>
+</aside>
+
+<script>
+const $ = s => document.querySelector(s);
+const API_PRESETS = {
+  openai_official: {
+    label:'OpenAI (official)', url:'https://api.openai.com/v1', model:'gpt-4o-mini',
+    keyEnv:'OPENAI_API_KEY', keyPlaceholder:'sk-…',
+    note:'Official OpenAI Chat Completions endpoint.'
+  },
+  anthropic_compat: {
+    label:'Anthropic-compatible gateway', url:'https://api.anthropic.com/v1', model:'claude-sonnet-4-20250514',
+    keyEnv:'ANTHROPIC_API_KEY', keyPlaceholder:'sk-ant-…',
+    note:'Use this only if your endpoint exposes Anthropic models through the OpenAI chat-completions API shape (for example via a compatibility gateway).'
+  },
+  ollama_local: {
+    label:'Ollama (local)', url:'http://localhost:11434/v1', model:'llama3.2',
+    keyEnv:'', keyPlaceholder:'optional', note:'Local OpenAI-compatible endpoint.'
+  },
+  lmstudio_local: {
+    label:'LM Studio (local)', url:'http://localhost:1234/v1', model:'',
+    keyEnv:'', keyPlaceholder:'optional', note:'Local OpenAI-compatible endpoint.'
+  },
+  vllm_local: {
+    label:'vLLM (local)', url:'http://localhost:8000/v1', model:'',
+    keyEnv:'', keyPlaceholder:'optional', note:'Local OpenAI-compatible endpoint.'
+  },
+};
+let PROBES = [], state = {datasetId:null, mode:'none', demoName:'sandbagger',
+  api:{preset:'ollama_local', url:'http://localhost:11434/v1', model:'llama3.2', api_key:''},
+  selected:null, runId:null, poll:null, filters:{high:1,medium:1,low:1,info:1},
+  search:'', report:null, pfilter:'all', progressTrace:[],
+  jointFilter:'all', tierFilter:'all', claimFilter:'all', sortBy:'priority',
+  pinnedA:null, compareData:null,
+  exp:{id:null, offset:0, limit:25, total:0}};
+
+const JOINTS = {
+  "Items":["dataset_hygiene","contamination_perturb","label_error_audit","item_ambiguity","coverage_distribution","discrimination_saturation"],
+  "Presentation":["prompt_format_sensitivity","option_order_bias","answer_extraction_audit"],
+  "Behaviour":["sandbagging_paired","elicitation_ceiling","refusal_confound","self_consistency","reward_hacking_eval"],
+  "Scoring":["judge_swap"],
+  "Statistics":["statistical_power","subgroup_power","multiplicity_cherrypick"],
+  "Time & provenance":["model_drift","provenance_repro"]
+};
+const SEV = {high:'hi',medium:'me',low:'lo',info:'in'};
+
+/* ============ Phase 1: claim taxonomy, remediation, calibration join ============ */
+// Reverse lookup probe -> joint (built from JOINTS).
+const PROBE_JOINT = {};
+for(const [j, ids] of Object.entries(JOINTS)) ids.forEach(id => PROBE_JOINT[id]=j);
+
+// Which CLAIM each probe bears on (editorial; a probe can affect several).
+// Used for filtering and the "claims affected" line — NOT a per-claim verdict.
+const CLAIM_TYPES = {
+  capability:["contamination_perturb","sandbagging_paired","elicitation_ceiling","refusal_confound",
+    "label_error_audit","item_ambiguity","answer_extraction_audit","reward_hacking_eval",
+    "prompt_format_sensitivity","dataset_hygiene"],
+  ranking:["discrimination_saturation","statistical_power","subgroup_power","multiplicity_cherrypick",
+    "option_order_bias","coverage_distribution","prompt_format_sensitivity"],
+  longitudinal:["model_drift","provenance_repro","self_consistency"],
+  "judge-scored":["judge_swap","self_consistency"],
+};
+const CLAIM_LABEL = {capability:"capability", ranking:"ranking", longitudinal:"longitudinal", "judge-scored":"judge-scored"};
+const CLAIMS_OF = {};  // probe -> [claims]
+for(const [cl, ids] of Object.entries(CLAIM_TYPES)) ids.forEach(id => (CLAIMS_OF[id]=CLAIMS_OF[id]||[]).push(cl));
+
+// Concise, honest remediation per probe (what to do if it fires).
+const REMEDIATION = {
+  dataset_hygiene:"Deduplicate, drop empty items, and remove any canary/leaked strings before scoring.",
+  contamination_perturb:"Re-test on held-out or freshly-authored items; report paraphrase-robust accuracy.",
+  label_error_audit:"Have the flagged items re-annotated; correct or remove wrong golds before reporting.",
+  item_ambiguity:"Rewrite or drop under-specified items; report on the well-posed subset.",
+  coverage_distribution:"Rebalance categories, or scope the claim to the categories actually covered.",
+  discrimination_saturation:"Move to a harder or dynamic benchmark; don't rank models on a saturated test.",
+  prompt_format_sensitivity:"Report across several equivalent templates, or fix and disclose one canonical format.",
+  option_order_bias:"Randomize option order across items and average; report the order-robust score.",
+  answer_extraction_audit:"Fix the answer extractor / use hybrid scoring, then re-score.",
+  sandbagging_paired:"Compare eval-framed vs neutral-framed performance; investigate the gap before trusting the score.",
+  elicitation_ceiling:"Report the elicited (best-scaffold) score, or disclose the elicitation method used.",
+  refusal_confound:"Separate refusals from genuine failures; report capability on attempted items.",
+  self_consistency:"Report at temperature 0 or aggregate multiple samples; disclose decoding settings.",
+  reward_hacking_eval:"Inspect flagged passes for gaming; tighten the grader so lenient matches don't count.",
+  judge_swap:"Swap/rotate judge and candidate positions and average; report inter-judge agreement (kappa).",
+  statistical_power:"Increase n or widen the reported confidence interval; don't compare scores within the margin.",
+  subgroup_power:"Aggregate thin subgroups or report per-subgroup CIs; avoid per-subgroup claims at low n.",
+  multiplicity_cherrypick:"Pre-register the config, or report all configs / a multiplicity-corrected result — not the best.",
+  model_drift:"Re-run the eval on the current model; date-stamp and version every reported score.",
+  provenance_repro:"Pin model version, decoding and seed; ship a provenance hash with the score.",
+};
+
+const TIER_CLASS = {real_labeled:"tier-real", structural_exact:"tier-structural", behavioral_synthetic:"tier-behavioral"};
+const TIER_WORD = {real_labeled:"real labels", structural_exact:"exact", behavioral_synthetic:"synthetic floor"};
+const TIER_DISCOUNT = {real_labeled:1.0, structural_exact:1.0, behavioral_synthetic:0.8};
+const SEV_RANK = {high:3, medium:2, low:1, info:0};
+
+// Calibration data, fetched once and joined to findings by probe id.
+let CALIB = null, CALIB_PENDING = false, CALIB_ERROR = null;
+async function ensureCalib(){
+  if(CALIB || CALIB_PENDING) return CALIB;
+  CALIB_PENDING = true;
+  try{
+    const d = await api('/api/calibration');
+    const byId = {};
+    (d.probes||[]).forEach(p => byId[p.id] = p);
+    CALIB = {probes:d.probes||[], byId, pooled:d.pooled, coverage:d.coverage,
+             generated_at:d.generated_at, seed:d.seed, errors:d.errors||{}};
+    CALIB_ERROR = null;
+  }catch(e){
+    CALIB = null;                         // do NOT poison with an empty object: allow retry
+    CALIB_ERROR = e.message || String(e); // surface the real reason instead of an eternal 'loading'
+  }
+  CALIB_PENDING = false;
+  // repaint OUTSIDE the fetch try, so a paint error can never wipe a good CALIB
+  if(CALIB && state.report){ try{ paintSynthesis(); paintFindings(); }catch(_){ } }
+  return CALIB;
+}
+function calibFor(pid){ return (CALIB && CALIB.byId && CALIB.byId[pid]) || null; }
+// reliability weight in [0,1]: measured precision tempered by evidence tier.
+function reliabilityWeight(pid){
+  const c = calibFor(pid); if(!c) return 0.6;
+  const prec = (c.matrix && c.matrix.precision && c.matrix.precision.value!=null) ? c.matrix.precision.value : 0.7;
+  const disc = TIER_DISCOUNT[c.tier] != null ? TIER_DISCOUNT[c.tier] : 0.8;
+  return (0.5 + 0.5*prec) * disc;
+}
+function priorityScore(f){
+  return SEV_RANK[f.severity] * reliabilityWeight(f.probe_id) + (f.score!=null ? 0.05*f.score : 0);
+}
+const MAX_PROGRESS_SAMPLES = 48;
+const SVG_WIDTH = 100;
+const TIMELINE_SVG_HEIGHT = 90;
+const TIMELINE_BASELINE = 78;
+const TIMELINE_HEIGHT = 66;
+const TIMELINE_TOP = TIMELINE_BASELINE - TIMELINE_HEIGHT;
+
+async function api(path, opts){ const r = await fetch(path, opts); if(!r.ok){throw new Error((await r.json()).error||r.statusText);} return r.json(); }
+
+/* ---- init ---- */
+(async function(){
+  PROBES = await api('/api/probes');
+  $('#probe-count').textContent = PROBES.length + ' probes';
+  buildProbeGroups();
+  setMode('none');
+  ensureCalib();   // prefetch calibration so finding reliability is ready on first results
+})();
+
+/* ---- dataset tabs ---- */
+function setTab(t){
+  for(const name of ['synth','pull','upload']){
+    const tab = $('#tab-'+name), pane = $('#pane-'+name);
+    if(tab) tab.classList.toggle('on', name===t);
+    if(pane) pane.style.display = name===t ? 'block' : 'none';
+  }
+}
+
+/* ---- Hugging Face: explorer + structure + mapping ---- */
+let HF = {columns:[], guess:{}, presetConfig:null, presetSplit:null};
+const HF_FIELDS = [
+  ['question','Question / prompt', 'The column holding the question or task text. Required — it becomes each item\u2019s prompt.'],
+  ['answer','Gold answer', 'The expected/correct answer (ground truth). Needed for grading; leave as “none” if the dataset has none.'],
+  ['response','Model response', 'A model\u2019s actual output, if the dataset already contains one (i.e. it is an eval RESULT, not just a benchmark). Enables static-on-real-responses probes.'],
+  ['score','Score', 'The recorded correctness/metric for that response (e.g. acc, exact_match, 0/1, true/false). Coerced to a number.'],
+  ['category','Category', 'A subject/topic/subset label, used by coverage and subgroup-power probes.'],
+  ['options','MCQ options', 'A list column of multiple-choice options, used by the option-order-bias probe.'],
+];
+
+async function hfSearch(){
+  const q = $('#hf-search-q').value.trim();
+  const sort = $('#hf-sort').value;
+  const box = $('#hf-results');
+  box.innerHTML = '<div class="exp-empty"><span class="spin"></span></div>';
+  try{
+    const r = await api('/api/hf/search',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({query:q, sort, limit:30, token:$('#hf-token').value||null, relevant_only:$('#hf-relevant').checked, results_only:$('#hf-results')?$('#hf-results').checked:false})});
+    if(!r.results.length){ box.innerHTML = '<div class="exp-empty">No datasets found.</div>'; return; }
+    box.innerHTML = r.results.map(d=>{
+      const dl = d.downloads>=1000 ? (d.downloads/1000).toFixed(0)+'k' : d.downloads;
+      return `<div class="hf-ds" onclick="hfPick('${esc(d.id)}')">
+        <span class="id">${esc(d.id)}</span>
+        ${d.gated?'<span class="gated">gated</span>':''}
+        <span class="meta">↓ ${dl} · ♥ ${d.likes}</span></div>`;
+    }).join('');
+  }catch(e){ box.innerHTML = `<div class="exp-empty">Search failed: ${esc(e.message)}</div>`; }
+}
+function hfPick(id){ $('#hf-dataset').value = id; HF.presetConfig=null; HF.presetSplit=null; hfInspect(); }
+function hfQuick(id, cfg, split){ $('#hf-dataset').value = id; HF.presetConfig=cfg; HF.presetSplit=split; hfInspect(); }
+
+function renderHfFormat(fmt){
+  const el = document.getElementById('hf-format'); if(!el) return;
+  if(!fmt){ el.innerHTML=''; return; }
+  const label = {results:'Eval results — auditable', responses:'Responses, no score',
+                 questions_only:'Questions only — limited audit', unknown:'Unrecognized format'}[fmt.kind] || fmt.kind;
+  const ok = fmt.kind==='results';
+  const bd = ok?'#bbf7d0':'#fde9cf', bg = ok?'#f0fdf4':'#fff7ed', fg = ok?'#15803d':'#c2620a';
+  el.innerHTML = `<div style="border:1px solid ${bd};background:${bg};border-radius:8px;padding:8px 11px;font-size:12.5px;color:${fg}">
+    <b>${esc(label)}</b><div style="color:var(--muted);font-size:11.5px;margin-top:2px">${esc(fmt.reason||'')}</div></div>`;
+}
+async function hfInspect(){
+  const dataset = $('#hf-dataset').value.trim();
+  if(!dataset){ alert('Enter or pick a dataset id (e.g. openai/gsm8k)'); return; }
+  const btn = $('#hf-inspect-btn'); const old = btn.textContent;
+  btn.innerHTML='<span class="spin"></span>'; btn.disabled=true;
+  try{
+    const info = await api('/api/hf/inspect',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({dataset, config:HF.presetConfig, split:HF.presetSplit, token:$('#hf-token').value||null})});
+    HF.columns = info.columns; HF.guess = info.guess; HF.splits = info.splits;
+    HF.presetConfig = null; HF.presetSplit = null;
+    $('#hf-config').innerHTML = info.configs.map(c=>`<option ${c===info.config?'selected':''}>${esc(c)}</option>`).join('');
+    const splitsForCfg = [...new Set(info.splits.filter(s=>s.config===info.config).map(s=>s.split))];
+    $('#hf-split').innerHTML = splitsForCfg.map(s=>`<option ${s===info.split?'selected':''}>${esc(s)}</option>`).join('');
+    renderMapping(info.columns, info.guess);
+    renderHfFormat(info.format);
+    renderSample(info.sample, info.columns);
+    $('#hf-config-area').style.display='block';
+    $('#hf-config-area').scrollIntoView({behavior:'smooth', block:'nearest'});
+    updateFetchEnabled();
+  }catch(e){ alert('Could not load structure: '+e.message); }
+  btn.textContent=old; btn.disabled=false;
+}
+async function hfReinspect(){
+  HF.presetConfig = $('#hf-config').value; HF.presetSplit = $('#hf-split').value;
+  await hfInspect();
+}
+function renderMapping(columns, guess){
+  const auto = Object.entries(guess).filter(([k,v])=>v).map(([k,v])=>k).length;
+  let html = `<label class="fld">Map columns → fields
+    <span class="helpbtn" title="Every Hugging Face dataset names its columns differently. Tell Trust the Eval which column is the question, which is the gold answer, etc. We auto-guessed from the column names — check and adjust. Only the question is required.">?</span>
+    </label>
+    <p class="help" style="margin:0 0 8px">We detected <b>${columns.length}</b> columns and auto-mapped <b>${auto}</b>. Adjust if a guess is wrong; hover each row for what it means. Only <b>Question</b> is required.</p>
+    <div class="hf-map">`;
+  for(const [f,label,tip] of HF_FIELDS){
+    const none = f==='question' ? '' : '<option value="">— none —</option>';
+    const opts = columns.map(c=>`<option value="${esc(c)}" ${guess[f]===c?'selected':''}>${esc(c)}</option>`).join('');
+    html += `<div class="hf-row" title="${esc(tip)}"><span>${label}</span><select data-field="${f}" onchange="updateFetchEnabled()">${none}${opts}</select></div>`;
+  }
+  $('#hf-mapping').innerHTML = html + '</div>';
+}
+function currentMapping(){
+  const m = {};
+  document.querySelectorAll('#hf-mapping select').forEach(s=>{ if(s.value) m[s.dataset.field]=s.value; });
+  return m;
+}
+function updateFetchEnabled(){ $('#hf-fetch-btn').disabled = !currentMapping().question; }
+function renderSample(rows, columns){
+  if(!rows || !rows.length){ $('#hf-sample').innerHTML=''; return; }
+  const cols = columns.slice(0,6);
+  let html = '<label class="fld">Preview (first rows)</label><div style="overflow:auto"><table class="evt"><thead><tr>'
+    + cols.map(c=>`<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>';
+  rows.slice(0,3).forEach(r=>{
+    html += '<tr>' + cols.map(c=>{ let v=r[c]; if(v&&typeof v==='object') v=JSON.stringify(v);
+      v = (''+(v==null?'':v)); if(v.length>80) v=v.slice(0,79)+'…'; return `<td>${esc(v)}</td>`; }).join('') + '</tr>';
+  });
+  $('#hf-sample').innerHTML = html + '</tbody></table></div>';
+}
+async function hfPull(){
+  const dataset = $('#hf-dataset').value.trim();
+  const mapping = currentMapping();
+  if(!mapping.question){ alert('Map a question column first'); return; }
+  const btn = $('#hf-fetch-btn'); const old = btn.textContent;
+  btn.innerHTML='<span class="spin"></span> Fetching'; btn.disabled=true;
+  try{
+    const s = await api('/api/hf/pull',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({dataset, config:$('#hf-config').value, split:$('#hf-split').value,
+        n:+$('#hf-n').value, token:$('#hf-token').value||null, mapping})});
+    onLoaded(s);
+  }catch(e){ alert('Fetch failed: '+e.message); }
+  btn.innerHTML=old; btn.disabled=false;
+}
+async function loadSynthetic(){
+  const n = +$('#gen-n').value, seed = +$('#gen-seed').value;
+  const btn = event.target; const old = btn.textContent; btn.textContent='Generating…'; btn.disabled=true;
+  try{ const s = await api('/api/load',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({type:'synthetic', n, seed})}); onLoaded(s);
+  }catch(e){ alert('Load failed: '+e.message); }
+  btn.textContent=old; btn.disabled=false;
+}
+const drop = $('#drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag');}));
+drop.addEventListener('drop',e=>{ if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+$('#file').addEventListener('change',e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); });
+function handleFile(f){
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const b64 = reader.result.split(',')[1];
+    drop.querySelector('strong').textContent = f.name;
+    try{ const s = await api('/api/load',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({type:'upload', filename:f.name, content_b64:b64})}); onLoaded(s);
+    }catch(e){ alert('Could not parse file: '+e.message); }
+  };
+  reader.readAsDataURL(f);
+}
+function onLoaded(s){
+  state.datasetId = s.dataset_id; state.report=null; state.progressTrace=[];
+  const cats = Object.entries(s.categories||{}).map(([k,v])=>k+' '+v).join(' · ');
+  $('#summary').style.display='block';
+  $('#summary').innerHTML =
+    `<div style="display:flex;align-items:center;gap:8px">
+       <div class="name" style="flex:1">${esc(s.dataset)}</div>
+       <button class="btn sm" onclick="openExplorer()">⤢ Explore</button>
+     </div>
+     <div class="kv"><b>${s.n}</b> items · <span class="mono">${s.provenance_hash.slice(0,19)}…</span></div>
+     <div class="chips">
+       <span class="chip ${s.has_responses?'ok':'no'}">responses ${s.has_responses?'✓':'absent'}</span>
+       <span class="chip ${s.has_scores?'ok':'no'}">scores ${s.has_scores?'✓':'absent'}</span>
+       <span class="chip">${s.n_categories} categories</span>
+       <span class="chip">${s.n_mcq} MCQ</span>
+     </div>
+     ${cats?`<div class="kv" style="margin-top:8px">${esc(cats)}</div>`:''}`;
+  $('#run-btn').disabled = false;
+}
+
+/* ---- dataset explorer drawer ---- */
+async function openExplorer(){
+  if(!state.datasetId) return;
+  state.exp = {id:state.datasetId, offset:0, limit:25, total:0};
+  $('#exp-scrim').classList.add('on'); $('#exp-drawer').classList.add('on');
+  $('#exp-title').textContent = 'Dataset explorer';
+  await loadExplorerPage();
+}
+function closeExplorer(){ $('#exp-scrim').classList.remove('on'); $('#exp-drawer').classList.remove('on'); }
+async function loadExplorerPage(){
+  const e = state.exp;
+  $('#exp-body').innerHTML = '<div class="exp-empty"><span class="spin"></span></div>';
+  try{
+    const r = await api(`/api/dataset/${e.id}/items?offset=${e.offset}&limit=${e.limit}`);
+    e.total = r.total;
+    $('#exp-sub').innerHTML = `${r.total} items · responses ${r.has_responses?'✓':'absent'} · scores ${r.has_scores?'✓':'absent'}`;
+    $('#exp-meta').textContent = `${r.total} items`;
+    const from = r.offset+1, to = Math.min(r.offset+r.limit, r.total);
+    $('#exp-range').textContent = `${from}\u2013${to} of ${r.total}`;
+    $('#exp-prev').disabled = r.offset<=0;
+    $('#exp-next').disabled = to>=r.total;
+    const showResp = r.has_responses, showScore = r.has_scores;
+    let h = '<table class="items"><thead><tr><th>#</th><th>Question</th><th>Gold</th>'
+      + (showResp?'<th>Response</th>':'') + (showScore?'<th>Score</th>':'') + '<th>Category</th></tr></thead><tbody>';
+    r.items.forEach((it,i)=>{
+      const opts = it.options ? '<div>'+it.options.map(o=>`<span class="opt">${esc(o)}</span>`).join('')+'</div>' : '';
+      const sc = it.score==null ? '<td class="sc">·</td>'
+        : `<td class="sc ${it.score>=0.5?'ok':'no'}">${(+it.score).toFixed(2)}</td>`;
+      h += `<tr><td class="mono">${r.offset+i}</td>
+        <td class="q">${esc(it.question||'')}${opts}</td>
+        <td>${esc(it.answer||'')}</td>`
+        + (showResp?`<td class="resp">${esc(it.response==null?'':it.response)}</td>`:'')
+        + (showScore?sc:'')
+        + `<td>${esc(it.category||'')}</td></tr>`;
+    });
+    $('#exp-body').innerHTML = h + '</tbody></table>';
+  }catch(err){ $('#exp-body').innerHTML = `<div class="exp-empty">Could not load items: ${esc(err.message)}</div>`; }
+}
+function expPage(dir){
+  const e = state.exp;
+  e.offset = Math.max(0, e.offset + dir*e.limit);
+  loadExplorerPage();
+}
+
+/* ---- model access ---- */
+function setMode(m){
+  state.mode = m;
+  document.querySelectorAll('#modeseg button').forEach(b=>b.classList.toggle('on', b.dataset.mode===m));
+  const ex = $('#mode-extra'); const note = $('#mode-note');
+  if(m==='none'){
+    ex.innerHTML='';
+    note.innerHTML='Static-only: 8 probes run, 12 model-in-the-loop probes are skipped (that is where the strongest signal lives).';
+  } else if(m==='demo'){
+    const opts = ['honest','sandbagger','elicitation','drifted','exploiter','stochastic','format_sensitive'];
+    ex.innerHTML = `<label class="fld">Demo behaviour (synthetic, offline)</label>
+      <select id="demo-sel" onchange="state.demoName=this.value">${opts.map(o=>`<option ${o===state.demoName?'selected':''}>${o}</option>`).join('')}</select>
+      <p class="help"><b>Not a real LLM.</b> This mode uses built-in synthetic behaviors over simple arithmetic so you can quickly see probes fire, offline and free. Use API-compatible mode for real model checks.</p>`;
+    note.innerHTML='Demo model: all 20 probes run against a controllable synthetic behaviour (arithmetic only).';
+  } else {
+    ex.innerHTML = `<label class="fld">Provider preset</label>
+      <select id="api-preset" onchange="setApiPreset(this.value)">
+        ${Object.entries(API_PRESETS).map(([id,p])=>`<option value="${id}" ${state.api.preset===id?'selected':''}>${esc(p.label)}</option>`).join('')}
+      </select>
+      <label class="fld subfld">Endpoint (OpenAI-compatible)</label>
+      <input type="text" id="api-url" value="${esc(state.api.url)}" oninput="state.api.url=this.value" placeholder="https://.../v1">
+      <input type="text" id="api-model" class="subfld" value="${esc(state.api.model)}" oninput="state.api.model=this.value" placeholder="model name">
+      <label class="fld subfld">API key <span class="helpbtn" title="Sent only with each run request, kept in memory for that run, never written to disk.">?</span></label>
+      <div class="keyrow">
+        <input type="password" id="api-key" value="${esc(state.api.api_key)}" oninput="state.api.api_key=this.value" placeholder="${esc(API_PRESETS[state.api.preset].keyPlaceholder)} (used per-run, never stored)">
+      </div>
+      <div class="keystate" id="keystat"></div>
+      <p class="help">${esc(API_PRESETS[state.api.preset].note)}</p>`;
+    note.innerHTML='API-compatible mode: all 20 probes run through one endpoint mode with provider presets.';
+    api('/api/env').then(e=>{
+      const p = API_PRESETS[state.api.preset];
+      const has = p.keyEnv==='OPENAI_API_KEY' ? e.openai_key : p.keyEnv==='ANTHROPIC_API_KEY' ? e.anthropic_key : false;
+      const msg = p.keyEnv
+        ? (has
+          ? `✓ ${p.keyEnv} found in environment (used if the field is blank)`
+          : `No ${p.keyEnv} in environment — paste a key above if your endpoint requires one.`)
+        : 'This preset usually runs without a key for local servers.';
+      $('#keystat').innerHTML = `<span style="color:${has?'var(--lo-t)':'var(--muted)'}">${esc(msg)}</span>`;
+    });
+  }
+}
+function setApiPreset(id){
+  const p = API_PRESETS[id]; if(!p) return;
+  state.api.preset = id;
+  state.api.url = p.url;
+  state.api.model = p.model;
+  setMode('api');
+}
+function modelSpec(){
+  if(state.mode==='none') return 'none';
+  if(state.mode==='demo') return 'local:'+state.demoName;
+  if(state.mode==='api') return 'api:'+state.api.url.trim()+'#'+state.api.model.trim();
+  return 'none';
+}
+function currentApiKey(){
+  if(state.mode==='api') return state.api.api_key||null;
+  return null;
+}
+
+/* ---- probes ---- */
+function buildProbeGroups(){
+  const byId = Object.fromEntries(PROBES.map(p=>[p.id,p]));
+  let html='';
+  for(const [joint, ids] of Object.entries(JOINTS)){
+    html += `<div class="pg" data-joint="${esc(joint)}"><h4>${joint}</h4>`;
+    for(const id of ids){ const p=byId[id]; if(!p) continue;
+      const kind = p.requires_model?'model':'static';
+      html += `<div class="pc" data-kind="${kind}"><input type="checkbox" class="pchk" value="${id}" data-kind="${kind}" checked onchange="onProbeChk()">
+        <label>${id}</label><span class="tag ${kind}">${kind}</span>
+        <button class="docbtn" title="Scientific documentation" onclick="openDoc('${id}')">i</button></div>`; }
+    html += `</div>`;
+  }
+  $('#probe-groups').innerHTML = html;
+}
+function probeFilter(f){
+  state.pfilter = f;
+  document.querySelectorAll('#pfilter button').forEach(b=>b.classList.toggle('on', b.dataset.f===f));
+  if(!$('#probe-groups').style.display || $('#probe-groups').style.display==='none'){ toggleCustomize(); }
+  document.querySelectorAll('#probe-groups .pc').forEach(pc=>{
+    const show = f==='all' || pc.dataset.kind===f;
+    pc.style.display = show ? '' : 'none';
+  });
+  document.querySelectorAll('#probe-groups .pg').forEach(pg=>{
+    const anyVisible = [...pg.querySelectorAll('.pc')].some(pc=>pc.style.display!=='none');
+    pg.style.display = anyVisible ? '' : 'none';
+  });
+  // selection = the visible, checked probes (null means "all 20")
+  syncSelection();
+}
+function toggleCustomize(){ const g=$('#probe-groups'); const open=g.style.display==='block';
+  g.style.display=open?'none':'block'; $('#cust-btn').textContent = (open?'Customize selection ▾':'Hide selection ▴'); }
+function toggleAll(){ const on=$('#all-probes').checked;
+  document.querySelectorAll('.pchk').forEach(c=>{ const pc=c.closest('.pc'); if(pc.style.display!=='none') c.checked=on; });
+  syncSelection(); }
+function onProbeChk(){ syncSelection(); }
+function syncSelection(){
+  const visible=[...document.querySelectorAll('.pchk')].filter(c=>c.closest('.pc').style.display!=='none');
+  const checked=visible.filter(c=>c.checked).map(c=>c.value);
+  state.selected = (checked.length===PROBES.length) ? null : checked;
+  $('#sel-count').textContent = checked.length;
+  $('#all-probes').checked = visible.length>0 && checked.length===visible.length;
+}
+
+/* ---- run ---- */
+async function run(){
+  if(!state.datasetId) return;
+  state.progressTrace = [];
+  $('#run-btn').innerHTML='<span class="spin"></span> Running'; $('#run-btn').disabled=true; $('#stop-btn').style.display='block';
+  renderRunning({i:0,total:(state.selected?state.selected.length:PROBES.length),id:''});
+  try{
+    const r = await api('/api/run',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({dataset_id:state.datasetId, model:modelSpec(), api_key:currentApiKey(), probes:state.selected, params:OVERRIDES})});
+    state.runId = r.run_id;
+    state.poll = setInterval(pollRun, 500); pollRun();
+  }catch(e){ alert('Run failed: '+e.message); resetRun(); }
+}
+async function pollRun(){
+  try{
+    const r = await api('/api/run/'+state.runId);
+    state.report = r;
+    noteProgress(r.progress);
+    if(r.status==='running'){ renderRunning(r.progress); renderFindings(r,true); }
+    else{ clearInterval(state.poll); resetRun(); renderFindings(r,false); }
+  }catch(e){ clearInterval(state.poll); resetRun(); }
+}
+async function stop(){ if(state.runId){ try{ await api('/api/run/'+state.runId+'/cancel',{method:'POST'}); }catch(e){} } }
+function resetRun(){ $('#run-btn').innerHTML='Run battery'; $('#run-btn').disabled=false; $('#stop-btn').style.display='none'; }
+
+/* ---- render ---- */
+function renderRunning(p){
+  noteProgress(p);
+  const pct = p.total? Math.round(100*p.i/p.total):0;
+  if(!$('#run-head')) renderShell({findings:[],skipped:[],errors:{},cost:{}}, p);
+  const pe=$('#prog'); if(pe){ pe.querySelector('span').style.width=pct+'%';
+    $('#prog-line').innerHTML=`<span>${p.id?('running '+p.id):'starting…'}</span><span>${p.i}/${p.total}</span>`; }
+}
+function counts(findings){ const c={high:0,medium:0,low:0,info:0}; findings.forEach(f=>c[f.severity]++); return c; }
+function noteProgress(p){
+  if(!p || !p.total) return;
+  const last = state.progressTrace[state.progressTrace.length-1];
+  if(last && last.i===p.i && last.total===p.total && last.id===p.id) return;
+  state.progressTrace.push({i:p.i,total:p.total,id:p.id||'',ts:Date.now()});
+  if(state.progressTrace.length>MAX_PROGRESS_SAMPLES) state.progressTrace = state.progressTrace.slice(-MAX_PROGRESS_SAMPLES);
+}
+function renderShell(r, prog){
+  const c=counts(r.findings||[]);
+  const cost = r.cost && r.cost.calls!=null ? `${r.cost.calls} calls · ~$${r.cost.est_usd}` : '—';
+  const model = modelSpec()==='none'?'static only':modelSpec();
+  $('#results').innerHTML = `
+    <div class="card pad">
+      <div class="stats">
+        <div class="stat hi"><div class="v" id="c-high">${c.high}</div><div class="l">High</div></div>
+        <div class="stat me"><div class="v" id="c-medium">${c.medium}</div><div class="l">Medium</div></div>
+        <div class="stat lo"><div class="v" id="c-low">${c.low}</div><div class="l">Low</div></div>
+        <div class="stat in"><div class="v" id="c-info">${c.info}</div><div class="l">Info</div></div>
+        <div class="stat"><div class="v">${state.report?state.report.n_items:''}</div><div class="l">Items</div></div>
+        <div class="stat"><div class="v" style="font-size:13px;font-weight:600" class="mono">${esc(model)}</div><div class="l">Model</div></div>
+        <div class="stat"><div class="v" style="font-size:13px;font-weight:600">${esc(cost)}</div><div class="l">Cost</div></div>
+      </div>
+      <div id="run-head">
+        <div class="prog" id="prog"><span></span></div>
+        <div class="prog-line" id="prog-line"></div>
+      </div>
+      <div class="toolbar">
+        <div class="sevfilter">
+          ${['high','medium','low','info'].map(s=>`<span class="sevtog on ${SEV[s]}" data-sev="${s}" onclick="toggleSev('${s}')">${s}</span>`).join('')}
+        </div>
+        <div class="grow"><input type="text" placeholder="filter findings…" oninput="state.search=this.value.toLowerCase();paintFindings()"></div>
+        <button class="btn sm" onclick="exp('json')">JSON</button>
+        <button class="btn sm" onclick="exp('html')">HTML</button>
+        <button class="btn sm" onclick="exp('otel')">OTel</button>
+        <button class="btn sm trustbtn" onclick="exp('trust')" title="Self-contained, provenance-stamped HTML report of this run">Trust Report</button>
+        <span class="cmpsep"></span>
+        <button class="btn sm" onclick="pinRunA()" title="Keep this run as baseline A for comparison">Pin as A</button>
+        ${state.pinnedA?`<span class="pinpill" title="Baseline pinned for comparison">A: ${esc(state.pinnedA.dataset)} · ${esc(state.pinnedA.model)} <a onclick="unpinA()" title="Unpin">×</a></span>`:''}
+        ${state.pinnedA && state.pinnedA.runId!==state.runId?`<button class="btn sm primary" onclick="compareWithA()">Compare with A</button>`:''}
+      </div>
+      <div class="filt2">
+        <span class="lbl">tier</span>
+        ${[['all','all'],['real_labeled','real'],['structural_exact','exact'],['behavioral_synthetic','floor']]
+          .map(([t,lab])=>`<span class="tierchip ${state.tierFilter===t?'on':''}" data-tier="${t}" onclick="setTierFilter('${t}')">${lab}</span>`).join('')}
+        <span class="lbl" style="margin-left:8px">joint</span>
+        <select onchange="state.jointFilter=this.value;paintFindings()">
+          <option value="all"${state.jointFilter==='all'?' selected':''}>all</option>
+          ${Object.keys(JOINTS).map(j=>`<option value="${esc(j)}"${state.jointFilter===j?' selected':''}>${esc(j)}</option>`).join('')}
+        </select>
+        <span class="lbl" style="margin-left:8px">claim</span>
+        <select onchange="state.claimFilter=this.value;paintFindings()">
+          <option value="all"${state.claimFilter==='all'?' selected':''}>all</option>
+          ${Object.keys(CLAIM_TYPES).map(c=>`<option value="${esc(c)}"${state.claimFilter===c?' selected':''}>${esc(CLAIM_LABEL[c])}</option>`).join('')}
+        </select>
+        <span class="grow"></span>
+        <span class="lbl">sort</span>
+        <select onchange="state.sortBy=this.value;paintFindings()">
+          <option value="priority"${state.sortBy==='priority'?' selected':''}>priority (severity × reliability)</option>
+          <option value="severity"${state.sortBy==='severity'?' selected':''}>severity</option>
+          <option value="probe"${state.sortBy==='probe'?' selected':''}>probe id</option>
+          <option value="joint"${state.sortBy==='joint'?' selected':''}>joint</option>
+        </select>
+      </div>
+      <div id="comparepanel"></div>
+      <div id="claimverdicts"></div>
+      <div id="synthesis"></div>
+      <div id="vizpanel"></div>
+      <div id="findlist"></div>
+      <div id="extra"></div>
+    </div>`;
+}
+function renderFindings(r, running){
+  renderShell(r);
+  if(running){ const pct=r.progress&&r.progress.total?Math.round(100*r.progress.i/r.progress.total):0;
+    $('#prog').querySelector('span').style.width=pct+'%';
+    $('#prog-line').innerHTML=`<span>${r.progress.id?('running '+r.progress.id):'…'}</span><span>${r.progress.i}/${r.progress.total}</span>`;
+  } else { $('#run-head').style.display='none'; }
+  paintFindings();
+  // skipped + errors
+  let extra='';
+  if(r.skipped && r.skipped.length){
+    extra += `<div class="section-title">Skipped — need model access</div>
+      <div class="skip-note">These are the model-in-the-loop probes; pick a model in step 2 to run them. This is where the strongest validity signal lives.</div>
+      <div class="skips">${r.skipped.map(s=>`<span class="chip">${s}</span>`).join('')}</div>`;
+  }
+  if(r.errors && Object.keys(r.errors).length){
+    extra += `<div class="section-title">Errors</div>` + Object.entries(r.errors).map(([k,v])=>`<div class="err">${esc(k)}: ${esc(v)}</div>`).join('');
+  }
+  $('#extra').innerHTML = extra;
+}
+function paintFindings(){
+  const r = state.report; if(!r) return;
+  const c=counts(r.findings||[]);
+  ['high','medium','low','info'].forEach(s=>{ const el=$('#c-'+s); if(el) el.textContent=c[s]; });
+  paintClaimVerdicts();
+  paintSynthesis();
+  renderViews();
+  const sevOrder={high:0,medium:1,low:2,info:3};
+  const tierOK = f => state.tierFilter==='all' || (calibFor(f.probe_id) && calibFor(f.probe_id).tier===state.tierFilter);
+  const jointOK = f => state.jointFilter==='all' || PROBE_JOINT[f.probe_id]===state.jointFilter;
+  const claimOK = f => state.claimFilter==='all' || (CLAIMS_OF[f.probe_id]||[]).includes(state.claimFilter);
+  const sorters = {
+    priority:(a,b)=> priorityScore(b)-priorityScore(a),
+    severity:(a,b)=> sevOrder[a.severity]-sevOrder[b.severity] || (b.score||0)-(a.score||0),
+    probe:(a,b)=> a.probe_id.localeCompare(b.probe_id),
+    joint:(a,b)=> (PROBE_JOINT[a.probe_id]||'').localeCompare(PROBE_JOINT[b.probe_id]||'') || sevOrder[a.severity]-sevOrder[b.severity],
+  };
+  const list=(r.findings||[]).filter(f=>state.filters[f.severity])
+    .filter(f=> !state.search || f.probe_id.toLowerCase().includes(state.search) || f.summary.toLowerCase().includes(state.search))
+    .filter(tierOK).filter(jointOK).filter(claimOK)
+    .sort(sorters[state.sortBy] || sorters.priority);
+  $('#findlist').innerHTML = list.length? list.map(fcard).join('')
+    : `<div class="muted" style="padding:20px;text-align:center">No findings match the current filter.</div>`;
+}
+function fcard(f){
+  const sv=SEV[f.severity];
+  const score = f.score!=null?`<span class="fscore">${(+f.score).toFixed(2)}</span>`:'';
+  const cal = calibFor(f.probe_id);
+  const tierBadge = cal ? `<span class="tierbadge ${TIER_CLASS[cal.tier]}" title="evidence tier: ${esc(TIER_WORD[cal.tier])}">${esc(TIER_WORD[cal.tier])}</span>` : '';
+  return `<div class="finding" onclick="this.classList.toggle('open')">
+    <div class="fhead">
+      <span class="dot ${sv}"></span>
+      <span class="sevbadge ${sv}">${f.severity}</span>
+      <span class="fid">${f.probe_id}</span>
+      ${tierBadge}
+      <span class="fsum">${esc(f.summary)}</span>
+      ${score}
+      <button class="docbtn" title="Scientific documentation" onclick="event.stopPropagation();openDoc('${f.probe_id}')">i</button>
+      <span class="caret">›</span>
+    </div>
+    <div class="fbody" onclick="event.stopPropagation()">
+      <div class="sumfull">${esc(f.summary)}</div>
+      ${attrsHtml(f.otel_attributes)}
+      ${evidenceHtml(f.evidence)}
+      ${relHtml(f.probe_id)}
+      ${remedyHtml(f.probe_id)}
+      ${claimsHtml(f.probe_id)}
+    </div></div>`;
+}
+function pctOrDash(m){ return (m && m.value!=null) ? (m.value*100).toFixed(0)+'%' : '—'; }
+function relHtml(pid){
+  const c = calibFor(pid);
+  if(!c){
+    const m = CALIB_ERROR ? '\u26a0 calibration unavailable' : 'Probe reliability: loading calibration…';
+    const tt = CALIB_ERROR ? ` title="${esc(CALIB_ERROR)}"` : '';
+    return `<div class="frel"><span class="rl"${tt}>${m}</span></div>`; }
+  const m = c.matrix||{};
+  const untested = c.tier==='behavioral_synthetic';
+  return `<div class="frel${untested?' untested':''}">
+    <span class="rl">Probe reliability (measured):</span>
+    <span>recall <b>${pctOrDash(m.recall)}</b></span>
+    <span>specificity <b>${pctOrDash(m.specificity)}</b></span>
+    <span>precision <b>${pctOrDash(m.precision)}</b></span>
+    <span class="tierbadge ${TIER_CLASS[c.tier]}">${esc(TIER_WORD[c.tier])}</span>
+    ${untested?'<span class="rl" title="No public per-item ground truth exists for this behavioural defect; validated against a model defective by construction. Real-world precision is unproven.">⚠ synthetic floor — real-world precision unproven</span>':''}
+    <span class="seecal" onclick="event.stopPropagation();openCalibration('${pid}')">see calibration ›</span>
+  </div>`;
+}
+function remedyHtml(pid){
+  const r = REMEDIATION[pid]; if(!r) return '';
+  return `<div class="fremedy"><span class="h">what to do</span>${esc(r)}</div>`;
+}
+function claimsHtml(pid){
+  const cl = CLAIMS_OF[pid]; if(!cl||!cl.length) return '';
+  return `<div class="fclaims"><span class="cchip" style="border:none;color:var(--muted)">affects claims:</span>`+
+    cl.map(c=>`<span class="cchip">${esc(CLAIM_LABEL[c])}</span>`).join('')+`</div>`;
+}
+function setTierFilter(t){ state.tierFilter=t;
+  document.querySelectorAll('.tierchip').forEach(e=>e.classList.toggle('on', e.dataset.tier===t)); paintFindings(); }
+
+/* Per-claim verdict — humble, evidence-backed. NOT a single grade, NOT model certification. */
+const CLAIM_MEAN = {
+  sup:"Not undermined by the validity threats we test.",
+  fra:"Usable with caveats — address the threats below before relying on it.",
+  uns:"The score can't support this claim as a clean measurement until these are fixed.",
+};
+const CLAIM_WORD = {sup:"supportable", fra:"fragile", uns:"not supportable"};
+function claimVerdict(claim, findings){
+  const ids = new Set(CLAIM_TYPES[claim]||[]);
+  const rel = findings.filter(f=>ids.has(f.probe_id));
+  const threats = rel.filter(f=>SEV_RANK[f.severity]>=2)
+    .sort((a,b)=>priorityScore(b)-priorityScore(a));
+  const isReliable = pid => { const c=calibFor(pid); return c && (c.tier==='real_labeled'||c.tier==='structural_exact'); };
+  const hasHighReliable = threats.some(f=>f.severity==='high' && isReliable(f.probe_id));
+  const hasHigh = threats.some(f=>f.severity==='high');
+  const hasMed = threats.some(f=>f.severity==='medium');
+  let v = 'sup';
+  if(hasHighReliable) v='uns';
+  else if(hasHigh || hasMed) v='fra';
+  return {v, threats, nProbes:rel.length};
+}
+function paintClaimVerdicts(){
+  const el = $('#claimverdicts'); if(!el) return;
+  const findings = (state.report && state.report.findings) || [];
+  const cards = Object.keys(CLAIM_TYPES).map(claim=>{
+    const {v, threats, nProbes} = claimVerdict(claim, findings);
+    const active = state.claimFilter===claim ? ' active':'';
+    const na = nProbes===0;                       // no relevant probe ran: nothing to support or undermine
+    const dv = na ? 'na' : v;
+    const word = na ? 'not assessed' : CLAIM_WORD[v];
+    const mean = na ? 'No probes target this claim for the data you loaded — there is nothing here to support or undermine.' : CLAIM_MEAN[v];
+    let body;
+    if(na){
+      body = `<div class="cv-none" style="color:var(--muted)">— no relevant probes —</div>`;
+    }else if(!threats.length){
+      body = `<div class="cv-none">✓ no medium+ validity threats among the ${nProbes} relevant probe${nProbes>1?'s':''}</div>`;
+    }else{
+      body = threats.slice(0,2).map(f=>{
+        const c=calibFor(f.probe_id); const sv=SEV[f.severity];
+        const rel = c?`<span class="cv-rel">· recall ${pctOrDash((c.matrix||{}).recall)} · ${esc(TIER_WORD[c.tier])}</span>`:'';
+        return `<div class="cv-th"><span class="sd ${sv}"></span><span><span class="pid">${esc(f.probe_id)}</span> ${esc(f.summary)} ${rel}</span></div>`;
+      }).join('') + (threats.length>2?`<div class="cv-rel" style="margin-top:3px">+${threats.length-2} more</div>`:'');
+    }
+    return `<div class="cv-card ${dv}${active}" onclick="filterByClaim('${claim}')" title="Click to filter findings to this claim">
+      <div class="cv-claim">${esc(CLAIM_LABEL[claim])} claim<span class="n">${na?'no relevant probes':nProbes+' probes'}</span></div>
+      <span class="cv-badge ${dv}"${na?' style="background:#f4f4f5;color:#52525b"':''}>${word}</span>
+      <div class="cv-mean">${mean}</div>
+      ${body}
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="cv-wrap">
+    <div class="cv-frame"><b>What can this eval result support?</b> Each claim is judged only against the validity
+      probes relevant to it, weighted by their <i>measured</i> reliability (<a onclick="openCalibration()">calibration</a>).
+      “Supportable” means <b>not undermined by the threats we test</b> — not proven correct. This assesses the
+      <b>score as a measurement</b>; it does not certify the model. Click a claim to see its threats below.</div>
+    <div class="cv-grid">${cards}</div>
+  </div>`;
+}
+function filterByClaim(claim){
+  state.claimFilter = (state.claimFilter===claim) ? 'all' : claim;
+  // sync the claim <select> if present
+  document.querySelectorAll('.filt2 select').forEach(sel=>{
+    if([...sel.options].some(o=>o.value===claim)) sel.value = state.claimFilter;
+  });
+  paintFindings();
+  const fl = document.getElementById('findlist'); if(fl) fl.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ---- Phase 2: A/B comparison ---- */
+function pinRunA(){
+  if(!state.runId || !state.report){ alert('Finish a run first.'); return; }
+  state.pinnedA = {runId:state.runId, dataset:(state.report.dataset||state.datasetName||'run A'),
+                   model:(modelSpec()||'none'), findings:(state.report.findings||[])};
+  renderShell(state.report); paintFindings();
+}
+function unpinA(){ state.pinnedA=null; state.compareData=null;
+  renderShell(state.report); paintFindings(); }
+function vbadge(v){ return `<span class="cv-badge ${v}">${CLAIM_WORD[v]}</span>`; }
+async function compareWithA(){
+  if(!state.pinnedA || !state.runId) return;
+  if(state.pinnedA.runId===state.runId){ alert('Pinned run and current run are the same.'); return; }
+  const el=$('#comparepanel'); el.innerHTML=`<div class="cmp"><div class="muted" style="padding:14px">Comparing…</div></div>`;
+  try{
+    const data = await api('/api/compare',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({run_a:state.pinnedA.runId, run_b:state.runId,
+        label_a:`${state.pinnedA.dataset} · ${state.pinnedA.model}`,
+        label_b:`${(state.report&&state.report.dataset)||'current'} · ${modelSpec()||'none'}`})});
+    state.compareData=data; renderComparePanel(data);
+    el.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){ el.innerHTML=`<div class="cmp"><div class="muted" style="padding:14px">Compare failed: ${esc(e.message)}</div></div>`; }
+}
+function accRow(label, blk){
+  if(!blk) return `<div class="cmp-row"><span class="cmp-lab">${esc(label)}</span><span class="muted" style="font-size:12px">no per-item scores</span></div>`;
+  const pc=v=>(v*100).toFixed(1);
+  return `<div class="cmp-row"><span class="cmp-lab">${esc(label)}</span>
+    <span class="cmp-acc">${pc(blk.acc)}%</span>
+    <span class="cmp-ci">95% CI [${pc(blk.lo)}, ${pc(blk.hi)}] · n=${blk.n}</span>
+    <span class="cmp-track"><span class="cmp-int" style="left:${pc(blk.lo)}%;width:${(blk.hi-blk.lo)*100}%"></span><span class="cmp-pt" style="left:${pc(blk.acc)}%"></span></span></div>`;
+}
+function renderComparePanel(d){
+  const el=$('#comparepanel'); if(!el||!d) return;
+  const s=d.score||{}, rk=d.ranking||{}, cb=d.comparability||{};
+  // gap line
+  let gapHtml='';
+  if(s.paired){
+    const p=s.paired, real=p.exceeds_noise;
+    gapHtml = p.discordant===0
+      ? `<div class="cmp-gap">paired on <b>${p.n_pairs}</b> shared items — no discordant items: identical outcomes.</div>`
+      : `<div class="cmp-gap ${real?'real':'noise'}">paired on <b>${p.n_pairs}</b> shared items · among <b>${p.discordant}</b> discordant, A wins <b>${p.a_wins}</b> vs B <b>${p.b_wins}</b>
+         · Wilson [${(p.sign_lo*100).toFixed(0)}%, ${(p.sign_hi*100).toFixed(0)}%] of discordant won by A →
+         <b>${real?'gap is real at 95%':'gap indistinguishable from noise'}</b></div>`;
+  }else if(s.gap){
+    const g=s.gap, real=g.exceeds_noise;
+    gapHtml = `<div class="cmp-gap ${real?'real':'noise'}">unpaired (different items): gap A−B = <b>${(g.d*100).toFixed(1)} pts</b>,
+       95% interval [${(g.lo*100).toFixed(1)}, ${(g.hi*100).toFixed(1)}] pts →
+       <b>${real?'gap exceeds the noise margin':'gap within noise — crossing 0'}</b></div>`;
+  }else{
+    gapHtml = `<div class="cmp-gap noise">aggregate score unavailable on at least one side — gap not quantifiable.</div>`;
+  }
+  // side-by-side claims (A findings pinned locally; B = current report)
+  const fa=(state.pinnedA&&state.pinnedA.findings)||[], fb=(state.report&&state.report.findings)||[];
+  const claims = Object.keys(CLAIM_TYPES).map(c=>{
+    const va=claimVerdict(c,fa).v, vb2=claimVerdict(c,fb).v;
+    return `<div class="cmp-claim"><span class="n">${esc(CLAIM_LABEL[c])}</span>
+      <span class="side">A ${vbadge(va)}</span><span class="side">B ${vbadge(vb2)}</span></div>`;
+  }).join('');
+  // probe diff
+  const ARROW={worse:'▲',better:'▼',same:'·',a_only:'A only',b_only:'B only'};
+  const rows=(d.probes||[]).filter(r=>r.max_rank>=1).map(r=>{
+    const sv=s=>s?`<span class="sevbadge ${SEV[s]}">${s}</span>`:'<span class="muted">—</span>';
+    return `<div class="cmp-prow ${r.change}"><code>${esc(r.probe_id)}</code>${sv(r.sev_a)}<span class="arr ${r.change}">${ARROW[r.change]||r.change}</span>${sv(r.sev_b)}</div>`;
+  }).join('') || '<div class="muted" style="font-size:12px">no low+ findings on either side</div>';
+  el.innerHTML = `<div class="cmp">
+    <div class="cmp-head"><h3>A/B comparison — is the ranking real or noise?</h3>
+      <button class="dclose" onclick="$('#comparepanel').innerHTML='';state.compareData=null" title="Dismiss">×</button></div>
+    <div class="cmp-frame">${(cb.notes||[]).map(esc).join(' · ')}</div>
+    ${accRow('A — '+(d.labels?d.labels.a:'A'), s.a)}
+    ${accRow('B — '+(d.labels?d.labels.b:'B'), s.b)}
+    ${gapHtml}
+    <div class="cmp-verdict"><span class="cv-badge ${rk.verdict}">${CLAIM_WORD[rk.verdict]||rk.verdict}</span>
+      <b>ranking claim (A vs B)</b><ul>${(rk.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join('')}</ul></div>
+    <div class="synth-h" style="margin-top:12px">Per-claim verdicts side by side</div>
+    <div class="cmp-claims">${claims}</div>
+    <div class="synth-h" style="margin-top:12px">Findings diff (A → B)</div>
+    <div class="cmp-probes">${rows}</div>
+  </div>`;
+}
+
+/* Humble structured overview — NOT a single trustworthiness grade. */
+function paintSynthesis(){
+  const el = $('#synthesis'); if(!el) return;
+  const r = state.report; const findings = (r && r.findings) || [];
+  const dotFor = rank => rank>=3?'hi':rank>=2?'me':rank>=1?'lo':'in';
+
+  // per-joint worst severity + medium+ count
+  const byJoint = {};
+  for(const j of Object.keys(JOINTS)) byJoint[j] = {worst:0, hot:0, n:0};
+  findings.forEach(f=>{ const j=PROBE_JOINT[f.probe_id]; if(!byJoint[j]) return;
+    byJoint[j].n++; byJoint[j].worst=Math.max(byJoint[j].worst, SEV_RANK[f.severity]);
+    if(SEV_RANK[f.severity]>=2) byJoint[j].hot++; });
+  const jointGrid = Object.entries(byJoint).map(([j,o])=>`
+    <div class="sj ${o.hot?'':'clean'}">
+      <div class="jn"><span class="dot ${dotFor(o.worst)}"></span>${esc(j)}</div>
+      <div class="jc">${o.hot?`${o.hot} medium+ threat${o.hot>1?'s':''}`:'no medium+ threat'}</div>
+    </div>`).join('');
+
+  // dominant threats: medium+ findings ranked by severity × measured reliability
+  const threats = findings.filter(f=>SEV_RANK[f.severity]>=2)
+    .sort((a,b)=>priorityScore(b)-priorityScore(a)).slice(0,3);
+  const threatHtml = threats.length ? threats.map(f=>{
+    const c = calibFor(f.probe_id); const sv=SEV[f.severity];
+    const conf = c ? `flagged by a probe with measured recall <b>${pctOrDash((c.matrix||{}).recall)}</b>, specificity <b>${pctOrDash((c.matrix||{}).specificity)}</b> · <b>${esc(TIER_WORD[c.tier])}</b> evidence`
+                   : (CALIB_ERROR ? `calibration unavailable` : `probe reliability loading…`);
+    const tb = c?`<span class="tierbadge ${TIER_CLASS[c.tier]}">${esc(TIER_WORD[c.tier])}</span>`:'';
+    return `<div class="threat" style="border-left-color:var(--${sv}-t,#d4d4d8)">
+      <span class="sevbadge ${sv}">${f.severity}</span>
+      <div class="tx">
+        <div class="tt">${esc(f.probe_id)} ${tb}</div>
+        <div class="ts">${esc(f.summary)}</div>
+        <div class="tc">${conf} · <span class="seecal" style="cursor:pointer;color:var(--accent,#4338ca)" onclick="openCalibration('${f.probe_id}')">calibration ›</span></div>
+      </div></div>`;
+  }).join('') : `<div class="muted" style="font-size:13px;padding:4px 0">No medium- or high-severity validity threats detected on this run.</div>`;
+
+  el.innerHTML = `<div class="synth">
+    <div class="synth-frame">Structured overview of validity threats — <b>not a single trustworthiness grade</b>.
+      Threats are ranked by severity × each flagging probe's <i>measured</i> reliability and evidence tier
+      (<a onclick="openCalibration()">see calibration</a>).</div>
+    <div class="synth-h">Validity threats by area</div>
+    <div class="synth-grid">${jointGrid}</div>
+    <div class="synth-h">Dominant threats</div>
+    <div class="threats">${threatHtml}</div>
+  </div>`;
+}
+/* ---- analytical views: registry + per-view enable/disable ---- */
+const VIEW_PREFS_KEY = 'tte_view_prefs';
+function loadViewPrefs(){ try{ return JSON.parse(localStorage.getItem(VIEW_PREFS_KEY)||'{}'); }catch(e){ return {}; } }
+let VIEW_PREFS = loadViewPrefs();
+function saveViewPrefs(){ try{ localStorage.setItem(VIEW_PREFS_KEY, JSON.stringify(VIEW_PREFS)); }catch(e){} }
+function viewEnabled(v){ return (v.id in VIEW_PREFS) ? !!VIEW_PREFS[v.id] : v.defaultOn; }
+function toggleView(id,on){ VIEW_PREFS[id]=!!on; saveViewPrefs(); renderViews(); }
+const VIEWS = [
+  { id:'triage', label:'Triage — severity × evidence tier', defaultOn:true,
+    why:'needs findings and calibration',
+    available(r){ return !!(CALIB && CALIB.byId) && (r.findings||[]).some(f=>SEV_RANK[f.severity]>=1); },
+    render(r){ return triageGrid(r); } },
+];
+function renderViews(){
+  const el = $('#vizpanel'), r = state.report; if(!el) return;
+  if(!r){ el.innerHTML=''; return; }
+  let html='';
+  for(const v of VIEWS){
+    if(!viewEnabled(v)) continue;
+    const ok = v.available(r);
+    html += `<div class="vizcard"><div class="vizhead"><span class="vt">${esc(v.label)}</span>`
+      + `<label class="vtoggle"><input type="checkbox" checked onchange="toggleView('${v.id}',this.checked)">shown</label></div>`
+      + (ok ? `<div class="vizbody">${v.render(r)}</div>` : `<div class="vizempty">unavailable — ${esc(v.why)}</div>`)
+      + `</div>`;
+  }
+  const off = VIEWS.filter(v=>!viewEnabled(v));
+  if(off.length){
+    html += `<div class="vizoff">Hidden views: ` + off.map(v=>`<a onclick="toggleView('${v.id}',true)">+ ${esc(v.label)}</a>`).join(' · ') + `</div>`;
+  }
+  el.innerHTML = html;
+}
+function triageGrid(r){
+  const TIERS=[['real_labeled','real labels'],['structural_exact','exact'],['behavioral_synthetic','synthetic floor']];
+  const SEVS=[['high','high'],['medium','medium'],['low','low']];
+  const byProbe={};
+  (r.findings||[]).forEach(f=>{ const sr=SEV_RANK[f.severity]; if(sr<1) return;
+    if(!byProbe[f.probe_id] || sr>byProbe[f.probe_id].sr) byProbe[f.probe_id]={pid:f.probe_id, sev:f.severity, sr}; });
+  if(!Object.keys(byProbe).length) return '<div class="vizempty">no low+ findings to plot</div>';
+  const cells={};
+  Object.values(byProbe).forEach(p=>{ const c=calibFor(p.pid); const tier=c?c.tier:'behavioral_synthetic';
+    const k=p.sev+'|'+tier; (cells[k]=cells[k]||[]).push(p.pid); });
+  let h=`<table class="triage"><thead><tr><th class="corner">severity \u2193 \u00b7 tier \u2192</th>`+TIERS.map(t=>`<th>${esc(t[1])}</th>`).join('')+`</tr></thead><tbody>`;
+  SEVS.forEach(s=>{ h+=`<tr><th class="sevh ${s[0]}">${s[1]}</th>`;
+    TIERS.forEach(t=>{ const act=(s[0]==='high'&&t[0]!=='behavioral_synthetic');
+      const inv=(s[0]==='high'&&t[0]==='behavioral_synthetic');
+      const pids=cells[s[0]+'|'+t[0]]||[];
+      h+=`<td class="${act?'act':inv?'inv':''}">`+(pids.length?pids.map(x=>`<span class="pchip">${esc(x)}</span>`).join(' '):'<span class="empty">\u00b7</span>')+`</td>`; });
+    h+=`</tr>`; });
+  h+=`</tbody></table>`;
+  h+=`<div class="vizlegend"><span class="key act">act first</span>severe + trustworthy evidence \u00b7 <span class="key inv">investigate</span>severe but synthetic-floor \u2014 don't yet trust \u00b7 reliability = calibration evidence tier, not a continuous score</div>`;
+  return h;
+}
+function attrsHtml(a){ if(!a||!Object.keys(a).length) return '';
+  return `<div class="attrs">${Object.entries(a).map(([k,v])=>`<span class="attr">${esc(k.replace('gen_ai.eval.trust.',''))}=${esc(''+v)}</span>`).join('')}</div>`; }
+function evidenceHtml(ev){
+  if(!ev||!Object.keys(ev).length) return '';
+  let out='<div class="ev">';
+  const examples = ev.examples || ev.underpowered || null;
+  const scalars = Object.entries(ev).filter(([k,v])=>k!=='examples'&&k!=='underpowered'&&(typeof v!=='object'));
+  if(scalars.length) out += `<div class="kv">`+scalars.map(([k,v])=>`<b>${esc(k)}</b>: ${esc(''+v)}`).join(' &nbsp; ')+`</div>`;
+  if(Array.isArray(examples) && examples.length){
+    const cols=[...new Set(examples.flatMap(e=>Object.keys(e)))];
+    out += `<h5 style="margin-top:10px">offending items (${examples.length})</h5><table class="evt"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>`+
+      examples.map(e=>`<tr>${cols.map(c=>`<td class="${typeof e[c]==='number'?'mono':''}">${esc(e[c]==null?'':''+e[c])}</td>`).join('')}</tr>`).join('')+`</tbody></table>`;
+  }
+  return out+'</div>';
+}
+function toggleSev(s){ state.filters[s]=!state.filters[s];
+  document.querySelector(`.sevtog[data-sev="${s}"]`).classList.toggle('on', !!state.filters[s]); paintFindings(); }
+function exp(fmt){ if(state.runId) window.open('/api/run/'+state.runId+'/export?fmt='+fmt,'_blank'); }
+/* ---- probe documentation drawer ---- */
+let DOC_OPEN_ID = null;
+function fmtNum(v){ if(typeof v==='number'){ return Number.isInteger(v)?(''+v):((+v).toFixed(4).replace(/0+$/,'').replace(/\.$/,'')); } return ''+v; }
+function findingsForOpenDoc(){ const r=state.report; if(!r||!DOC_OPEN_ID) return []; return (r.findings||[]).filter(f=>f.probe_id===DOC_OPEN_ID); }
+function firedSeverity(){ const fs=findingsForOpenDoc(); return fs.length?fs[0].severity:null; }
+const ORIGIN_LABEL = {measured:'from eval', parameter:'parameter', derived:'computed'};
+function bindingsBlock(d){
+  const fs = findingsForOpenDoc();
+  if(!fs.length) return '<div class="binds none">No finding from this run yet — run the probe and the exact inputs, their source, and the computed output appear here, lined up with the formula below.</div>';
+  const src = {}; (((d&&d.inputs)||[])).forEach(i=>src[i.key]=i);
+  const srcCell = s => s ? `<span class="orig ${esc(s.origin)}">${esc(ORIGIN_LABEL[s.origin]||s.origin)}</span>${esc(s.source)}` : '<span class="muted">—</span>';
+  return fs.map(f=>{
+    const ev = f.evidence||{};
+    const rows = Object.keys(ev).map(k=>`<tr><td class="bk">${esc(k)}</td><td class="bv">${esc(fmtNum(ev[k]))}</td><td class="bs">${srcCell(src[k])}</td></tr>`).join('');
+    const out = (f.score!=null) ? `<tr class="outrow"><td class="bk">output · score</td><td class="bv">${esc(fmtNum(f.score))}</td><td class="bs"><span class="orig derived">computed</span>severity driver reported by the probe</td></tr>` : '';
+    const sev = `<span class="sevbadge ${SEV[f.severity]}">${esc(f.severity)}</span>`;
+    return `<div class="binds"><div class="bh">Inputs &amp; computed output — this run ${sev}</div>`
+      + `<table class="btab"><thead><tr><th>operand</th><th>value</th><th>source</th></tr></thead><tbody>${rows}${out}</tbody></table>`
+      + `<div class="bnote">Each operand, its value, and where it came from — <b>from eval</b> (read from your run), <b>parameter</b> (a fixed choice), or <b>computed</b> (derived here). Match to the symbols in <b>Where</b>, plug into the formula above, and you reproduce the output.</div></div>`;
+  }).join('');
+}
+async function openDoc(id){
+  DOC_OPEN_ID = id;
+  $('#scrim').classList.add('on'); $('#drawer').classList.add('on');
+  $('#d-id').textContent = id; $('#d-sub').textContent = 'loading…';
+  docTab('science');
+  for(const s of ['science','math','interp','code']) $('#dsec-'+s).innerHTML='';
+  try{
+    const d = await api('/api/probe/'+encodeURIComponent(id));
+    renderDoc(d);
+    renderParams(id, d.tunables || {});
+  }catch(e){ $('#dsec-science').innerHTML = `<p class="muted">Could not load documentation: ${esc(e.message)}</p>`; }
+}
+function closeDoc(){ $('#scrim').classList.remove('on'); $('#drawer').classList.remove('on'); }
+
+/* ---- editable probe parameters (arbitrary constants) ---- */
+let OVERRIDES = {};        /* {probe_id: {param: value}} sent with every run */
+let DOC_TUNABLES = {};
+function setParam(id,name,raw,def){
+  const v = parseFloat(raw);
+  if(!OVERRIDES[id]) OVERRIDES[id] = {};
+  if(isNaN(v) || v===def){ delete OVERRIDES[id][name]; if(!Object.keys(OVERRIDES[id]).length) delete OVERRIDES[id]; }
+  else OVERRIDES[id][name] = v;
+  const b=document.getElementById('pcount-'+id);
+  if(b) b.textContent = (OVERRIDES[id]?Object.keys(OVERRIDES[id]).length:0)+' changed';
+}
+function resetParams(id){ delete OVERRIDES[id]; renderParams(id, DOC_TUNABLES[id]||{}); }
+function renderParams(id, tun){
+  DOC_TUNABLES[id] = tun || {};
+  const host = document.getElementById('dsec-interp'); if(!host) return;
+  const old = document.getElementById('params-'+id); if(old) old.remove();
+  const names = Object.keys(tun||{}); if(!names.length) return;
+  const rows = names.map(n=>{ const t=tun[n];
+    const cur=(OVERRIDES[id]&&OVERRIDES[id][n]!=null)?OVERRIDES[id][n]:t.default;
+    const tag=t.ctor?' <span style=\"font-size:11px;color:#64748b\">(sampling)</span>':'';
+    return `<div style=\"display:flex;align-items:center;gap:10px;margin:5px 0;flex-wrap:wrap\">
+      <code style=\"min-width:150px\">${esc(n)}${tag}</code>
+      <input type=\"number\" value=\"${cur}\" min=\"${t.min}\" max=\"${t.max}\" step=\"${t.step}\"
+             onchange=\"setParam('${id}','${esc(n)}',this.value,${t.default})\"
+             style=\"width:92px;padding:3px 6px;border:1px solid #cbd5e1;border-radius:6px\">
+      <span style=\"font-size:12px;color:#475569\">${esc(t.help)} <span class=\"muted\">(default ${t.default})</span></span>
+    </div>`; }).join('');
+  const block = `<div id=\"params-${id}\" style=\"border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:14px;background:#f8fafc\">
+     <div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:4px\">
+       <b>Parameters — editable, applied on your next run</b>
+       <span><span id=\"pcount-${id}\" class=\"muted\" style=\"font-size:12px;margin-right:8px\">${OVERRIDES[id]?Object.keys(OVERRIDES[id]).length:0} changed</span>
+       <button onclick=\"resetParams('${id}')\" style=\"font-size:12px\">reset</button></span>
+     </div>${rows}
+     <div class=\"muted\" style=\"font-size:11px;margin-top:6px\">Defaults equal the constants hard-coded in the probe; your overrides change only your runs, never the verified defaults.</div>
+   </div>`;
+  host.insertAdjacentHTML('afterbegin', block);
+}
+
+/* ---- calibration drawer ---- */
+let calibFilter='all';
+const TIER_COLOR={real_labeled:'#15803d',structural_exact:'#1d4ed8',behavioral_synthetic:'#b45309'};
+const TIER_SHORT={real_labeled:'real labels',structural_exact:'exact',behavioral_synthetic:'synthetic floor'};
+async function openCalibration(scrollTo){
+  $('#calib-scrim').classList.add('on'); $('#calib-drawer').classList.add('on');
+  if(!CALIB){
+    try{ await ensureCalib(); }
+    catch(e){ $('#calib-content').innerHTML=`<div class="cal-loading">Could not load calibration: ${esc(e.message)}</div>`; return; }
+  }
+  if(!CALIB || !CALIB.probes){ $('#calib-content').innerHTML=`<div class="cal-loading">Calibration unavailable.${CALIB_ERROR?`<br><br><b>Server error:</b> <code>${esc(CALIB_ERROR)}</code>`:''}<br><br><button class="btn sm" onclick="CALIB=null;CALIB_ERROR=null;CALIB_PENDING=false;openCalibration()">Retry</button></div>`; return; }
+  renderCalibration();
+  if(scrollTo){
+    setTimeout(()=>{ const t=document.getElementById('cal-'+scrollTo);
+      if(t){ t.scrollIntoView({behavior:'smooth',block:'center'}); t.classList.add('cal-flash'); } }, 60);
+  }
+}
+function closeCalibration(){ $('#calib-scrim').classList.remove('on'); $('#calib-drawer').classList.remove('on'); }
+function calibSetFilter(f){ calibFilter=f; renderCalibration(); }
+function pct(m){ return m && m.value!=null ? (m.value*100).toFixed(1)+'%' : 'n/a'; }
+function ci(m){ return m && m.lo!=null ? `95% CI [${(m.lo*100).toFixed(0)}, ${(m.hi*100).toFixed(0)}]` : ''; }
+function mcell(m){
+  if(!m||m.value==null) return '<span class="ci">n/a</span>';
+  const c = m.lo!=null?` <span class="ci">[${m.lo.toFixed(2)}, ${m.hi.toFixed(2)}]</span>`:'';
+  const kn = m.n!=null?` <span class="ci">(${m.k}/${m.n})</span>`:'';
+  return `<b>${m.value.toFixed(2)}</b>${c}${kn}`;
+}
+function orientNote(o){return {direct:'score rises with defect',inverted:'score falls with defect (oriented for AUC)',
+  non_monotonic:'U-shaped score (both extremes are defects)',degenerate:'single class — curve undefined'}[o]||o;}
+function renderCalibration(){
+  const p=CALIB.pooled, cov=CALIB.coverage, cc=cov.counts;
+  $('#calib-sub').textContent=`generated ${CALIB.generated_at} · seed ${CALIB.seed} · ${CALIB.probes.length} probes`
+    + (CALIB.errors && Object.keys(CALIB.errors).length ? ` · ${Object.keys(CALIB.errors).length} isolated (${Object.keys(CALIB.errors).join(', ')})` : '');
+  $('#calib-kpis').innerHTML=`
+    <div class="cal-kpi"><div class="v">${pct(p.precision)}</div><div class="l">pooled precision</div><div class="c">${ci(p.precision)}</div></div>
+    <div class="cal-kpi"><div class="v">${pct(p.recall)}</div><div class="l">pooled recall</div><div class="c">${ci(p.recall)}</div></div>
+    <div class="cal-kpi"><div class="v">${pct(p.specificity)}</div><div class="l">pooled specificity</div><div class="c">${ci(p.specificity)}</div></div>
+    <div class="cal-kpi"><div class="v">${p.probes_perfect}/${p.probes_total}</div><div class="l">probes perfect</div><div class="c">R = spec = 1.0</div></div>
+    <div class="cal-kpi"><div class="v">${p.macro_roc_auc!=null?p.macro_roc_auc.toFixed(3):'n/a'}</div><div class="l">macro ROC-AUC</div><div class="c">mean over probes</div></div>`;
+
+  const order={real_labeled:1,structural_exact:2,behavioral_synthetic:3};
+  const probes=[...CALIB.probes].sort((a,b)=>order[a.tier]-order[b.tier]||a.id.localeCompare(b.id))
+    .filter(pr=> calibFilter==='all' || pr.tier===calibFilter);
+
+  const counts={all:CALIB.probes.length,
+    real_labeled:cc.real_labeled||0,structural_exact:cc.structural_exact||0,behavioral_synthetic:cc.behavioral_synthetic||0};
+  const fbtn=(f,label)=>`<button class="${calibFilter===f?'on':''}" onclick="calibSetFilter('${f}')">${label} (${counts[f]})</button>`;
+
+  $('#calib-content').innerHTML=`
+    <p class="cal-intro">Each probe is a diagnostic test: its verdict (defect present / absent) is confronted with a
+      <b>known ground truth</b>, yielding a confusion matrix and the diagnostic-test rates this tool itself preaches —
+      precision, recall, specificity, each with a Wilson 95% interval — plus a threshold sweep giving ROC and
+      precision-recall curves. These calibration curves are distinct from the run dashboard visuals. The honest question this answers: <i>why trust the validity-checker?</i></p>
+    <div class="cal-bright"><b>Scope.</b> Every probe and case assesses the validity of an eval <i>result</i> as a measurement —
+      never the safety of a model. Reward-hacking / gaming probes are detection-only.</div>
+    <div class="cov-grid">
+      <div class="cov-box"><h4 style="color:${TIER_COLOR.real_labeled}">Tier 1 · real labels</h4>
+        <div class="cnt" style="color:${TIER_COLOR.real_labeled}">${cc.real_labeled||0}</div>
+        <p>A public dataset labels, per item, whether the defect is present (MMLU-Redux). Strongest evidence.</p></div>
+      <div class="cov-box"><h4 style="color:${TIER_COLOR.structural_exact}">Tier 2 · exact</h4>
+        <div class="cnt" style="color:${TIER_COLOR.structural_exact}">${cc.structural_exact||0}</div>
+        <p>The defect is a mathematical property of the artifact (sample size, configs, score spread). Synthetic <i>is</i> ground truth.</p></div>
+      <div class="cov-box"><h4 style="color:${TIER_COLOR.behavioral_synthetic}">Tier 3 · synthetic floor</h4>
+        <div class="cnt" style="color:${TIER_COLOR.behavioral_synthetic}">${cc.behavioral_synthetic||0}</div>
+        <p>Behavioural defects with no public per-item ground truth. Validated against models defective by construction.</p></div>
+    </div>
+    <div class="cal-filter">${fbtn('all','All')}${fbtn('real_labeled','Real labels')}${fbtn('structural_exact','Exact')}${fbtn('behavioral_synthetic','Synthetic floor')}</div>
+    <div id="cal-cards">${probes.map(calCard).join('')}</div>
+    <div class="cal-limits">
+      <b>Limitations — read before citing.</b>
+      <b>Synthetic floor is internal validity, not external:</b> Tier-3 probes are validated against models that exhibit the
+      defect by construction; this proves a probe fires on a real instance, not that its field precision equals these numbers.
+      <b>Small-n intervals are wide:</b> real-data groups can be few; a point estimate of 1.00 with a wide Wilson interval is not
+      a claim of perfection. <b>Verdict thresholds are conventions,</b> not calibrated boundaries. The probes' own documented
+      confounds still apply on messy field data.
+    </div>`;
+}
+function calCard(pr){
+  const m=pr.matrix, cm=pr.curves_meta||{};
+  const curves = (pr.roc_svg && pr.pr_svg)
+    ? `<div class="cal-curves">${pr.roc_svg}${pr.pr_svg}</div>`
+    : `<div class="cal-curve-empty">Curve undefined (single class in this probe's set).</div>`;
+  let reg='';
+  const rs=pr.regime_specificity||{};
+  const regs=Object.keys(rs).filter(k=>k!=='default');
+  if(regs.length){
+    reg=`<div class="cal-reg">specificity by clean regime: `+
+      regs.map(k=>`<code>${esc(k)}</code> ${mcell(rs[k].specificity)}`).join(' · ')+`</div>`;
+  }
+  const cav = pr.caveat?`<div class="cal-caveat"><span class="h">When not to trust this probe</span><p>${esc(pr.caveat)}</p></div>`:'';
+  return `<div class="cal-card" id="cal-${esc(pr.id)}">
+    <div class="ch"><h3>${esc(pr.id)}</h3><span class="kind">${pr.requires_model?'model-in-the-loop':'static'}</span>
+      <span class="cal-tier" style="background:${TIER_COLOR[pr.tier]}">${TIER_SHORT[pr.tier]}</span></div>
+    <p class="cal-basis">${esc(pr.tier_basis)}${pr.tier_source?`<br><b>Real source:</b> <code>${esc(pr.tier_source)}</code>`:''}</p>
+    <div class="cal-mrow">
+      <span class="m">precision ${mcell(m.precision)}</span>
+      <span class="m">recall ${mcell(m.recall)}</span>
+      <span class="m">specificity ${mcell(m.specificity)}</span>
+      <span class="m">F1 <b>${m.f1!=null?m.f1.toFixed(2):'—'}</b></span>
+    </div>
+    <div class="cal-mrow">
+      <span class="m">ROC-AUC <b>${cm.roc_auc!=null?cm.roc_auc.toFixed(3):'n/a'}</b></span>
+      <span class="m">avg precision <b>${cm.average_precision!=null?cm.average_precision.toFixed(3):'n/a'}</b></span>
+      <span class="m" style="color:var(--muted)">TP ${m.tp} · FP ${m.fp} · FN ${m.fn} · TN ${m.tn} · <i>${esc(orientNote(cm.orientation))}</i></span>
+    </div>
+    ${curves}${reg}${cav}
+  </div>`;
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeDoc(); closeExplorer(); closeCalibration(); } });
+function docTab(t){
+  for(const s of ['science','math','interp','code']){
+    document.querySelector(`.dtabs button[data-d="${s}"]`).classList.toggle('on', s===t);
+    $('#dsec-'+s).classList.toggle('on', s===t);
+  }
+}
+function paras(text){ return (text||'').split('\n\n').map(p=>`<p>${esc(p)}</p>`).join(''); }
+function renderDoc(d){
+  const tag = d.requires_model ? '<span class="tag-pill model">model-in-the-loop</span>' : '<span class="tag-pill static">static</span>';
+  $('#d-sub').innerHTML = `${esc(d.name)} &nbsp; ${tag} ${d.paper_priority?('&nbsp; <span class="muted">priority '+esc(d.paper_priority)+'</span>'):''}`;
+  if(!d.documented){
+    $('#dsec-science').innerHTML = `<p class="muted">Scientific write-up for this probe is coming. The live implementation is available under the <b>Code</b> tab.</p>`;
+    $('#dsec-math').innerHTML = `<p class="muted">—</p>`;
+    $('#dsec-interp').innerHTML = `<p class="muted">—</p>`;
+    renderCode(d.code);
+    return;
+  }
+  // SCIENCE
+  let sci = paras(d.science);
+  if(d.references && d.references.length){
+    sci += '<h4>References</h4>';
+    sci += d.references.map(r=>{
+      const link = r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.arxiv?('arXiv:'+r.arxiv):r.url)}</a>` : '';
+      return `<div class="ref"><div class="rt">${esc(r.authors)} (${r.year}). ${esc(r.title)}.</div>
+        <div class="rm">${esc(r.venue)} ${link}</div>
+        ${r.note?`<div class="rn">${esc(r.note)}</div>`:''}</div>`;
+    }).join('');
+  }
+  $('#dsec-science').innerHTML = sci;
+  // MATH
+  let m = bindingsBlock(d);
+  (d.math||[]).forEach(b=>{
+    m += `<div class="math-block"><div class="ml">${esc(b.label)}</div>
+      <div class="math-render">${b.html}</div>
+      <div class="math-latex">${esc(b.latex)}</div></div>`;
+  });
+  if(d.terms && d.terms.length){
+    m += '<h4>Where</h4><table class="terms"><tbody>' +
+      d.terms.map(t=>`<tr><td class="sym">${t.symbol}</td><td>${esc(t.definition)}</td></tr>`).join('') +
+      '</tbody></table>';
+  }
+  $('#dsec-math').innerHTML = m || '<p class="muted">—</p>';
+  // INTERPRETATION
+  let it = '';
+  if(d.effect) it += `<h4>Effect to achieve</h4><div class="callout">${esc(d.effect)}</div>`;
+  if(d.reading) it += `<h4>How to read the score</h4>${paras(d.reading)}`;
+  if(d.thresholds && d.thresholds.length){
+    it += '<h4>Severity thresholds</h4>';
+    const _fired = firedSeverity();
+    it += d.thresholds.map(t=>`<div class="thr${(_fired&&t.severity===_fired)?' fired':''}"><span class="dot ${SEV[t.severity]}"></span>
+      <span class="tw">${esc(t.when)}${(_fired&&t.severity===_fired)?' <span class="firedtag">← fired this run</span>':''}</span><span class="tm">${esc(t.meaning)}</span></div>`).join('');
+  }
+  if(d.caveats) it += `<h4>Caveats &amp; confounds</h4><div class="caveat">${esc(d.caveats)}</div>`;
+  $('#dsec-interp').innerHTML = it || '<p class="muted">—</p>';
+  // CODE
+  renderCode(d.code);
+}
+function renderCode(code){
+  if(!code){ $('#dsec-code').innerHTML='<p class="muted">—</p>'; return; }
+  let html = `<div class="codewrap"><div class="cn">probe implementation</div>
+    <pre class="code">${esc(code.probe)}</pre></div>`;
+  (code.helpers||[]).forEach(h=>{
+    html += `<div class="codewrap"><div class="cn">shared helper · ${esc(h.name)}</div>
+      <pre class="code">${esc(h.source)}</pre></div>`;
+  });
+  $('#dsec-code').innerHTML = html;
+}
+
+function esc(s){ return (''+s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trust-the-eval"
+version = "0.0.1"
+description = "An open, extensible battery of probes that red-team the VALIDITY of an AI evaluation result."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Trust the Eval contributors" }]
+keywords = ["ai-safety", "evaluation", "validity", "sandbagging", "contamination", "opentelemetry"]
+dependencies = []
+
+[project.optional-dependencies]
+otel = ["opentelemetry-sdk>=1.27"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+trust-the-eval = "trust_the_eval.cli:main"
+meridian = "trust_the_eval.meridian_cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+trust_the_eval = ["ui/*.html"]

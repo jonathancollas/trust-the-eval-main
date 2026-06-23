@@ -1,0 +1,40 @@
+[
+  {
+    "type": "local",
+    "id": "mmlu-virology-intrinsic",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::virology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_virology_intrinsic.json",
+    "anchors": { "min_rows": 1 }
+  },
+  {
+    "type": "local",
+    "id": "mmlu-virology-predictions",
+    "kind": "predictions",
+    "benchmark": "MMLU::virology",
+    "dataset_version": "mmlu-redux-2.0",
+    "path": "evals/mmlu_virology_predictions.json",
+    "anchors": { "min_rows": 1 }
+  },
+  {
+    "type": "hf_dataset",
+    "id": "mmlu-redux-anatomy-hf",
+    "kind": "intrinsic",
+    "benchmark": "MMLU::anatomy",
+    "dataset_version": "mmlu-redux-2.0",
+    "repo": "edinburgh-dawg/mmlu-redux-2.0",
+    "config": "anatomy",
+    "split": "test",
+    "anchors": { "min_rows": 1 }
+  },
+  {
+    "type": "leaderboard_url",
+    "id": "helm-mmlu-claims",
+    "kind": "claim",
+    "benchmark": "MMLU",
+    "dataset_version": "helm-v1.3.0",
+    "url": "https://raw.githubusercontent.com/your-org/your-repo/main/exports/helm_mmlu.jsonl",
+    "anchors": { "min_rows": 1, "score_between": [0.0, 1.0] }
+  }
+]

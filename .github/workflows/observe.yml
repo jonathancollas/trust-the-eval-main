@@ -1,0 +1,29 @@
+name: observe
+# Autonomous, continuous observation. The append-only store committed each run
+# becomes the observatory's own tamper-evident, timestamped audit trail.
+on:
+  schedule:
+    - cron: "0 */6 * * *"        # every 6 hours
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -e .
+      - name: observe (sync changed sources -> build -> verify -> feed)
+        run: meridian observe --sources sources.remote.example.json --store meridian-store --out site
+      - name: re-verify integrity (fails the run if tampered)
+        run: meridian verify --store meridian-store
+      - name: commit store + site
+        run: |
+          git config user.name  "meridian-bot"
+          git config user.email "meridian-bot@users.noreply.github.com"
+          git add meridian-store site
+          git commit -m "observe: $(date -u +%FT%TZ)" || echo "no changes to commit"
+          git push || echo "push skipped"
+      # To publish the dashboard, add an actions/deploy-pages step for ./site .

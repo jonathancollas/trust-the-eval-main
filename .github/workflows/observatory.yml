@@ -1,0 +1,69 @@
+name: observatory
+
+# Build the live Meridian observatory from the evals manifest and publish it to
+# GitHub Pages. Triggers: on every push of evals (or the engine), daily on a schedule,
+# and manually. `observe` syncs incrementally (only changed sources are re-audited);
+# we pass --always so the static site is always re-emitted for deployment.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "evals.json"
+      - "evals/**"
+      - "src/**"
+      - "pyproject.toml"
+      - ".github/workflows/observatory.yml"
+  schedule:
+    - cron: "17 6 * * *"   # daily ~06:17 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; let a running publish finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Trust-the-Eval
+        run: pip install -e .
+
+      # Persist the content-addressed store + source watermarks across runs, so the
+      # observatory recomputes incrementally (only evals that changed are re-audited).
+      - name: Restore incremental store
+        uses: actions/cache@v4
+        with:
+          path: .meridian-store
+          key: meridian-store-${{ github.run_id }}
+          restore-keys: |
+            meridian-store-
+
+      - name: Observe evals and build the observatory
+        run: meridian observe --sources evals.json --store .meridian-store --out site --always
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
