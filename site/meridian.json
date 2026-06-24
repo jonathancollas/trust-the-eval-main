@@ -1,0 +1,521 @@
+{
+  "schema": "meridian-api/v1",
+  "generated_utc": "2026-06-24T00:41:52Z",
+  "integrity": {
+    "records_verified": true,
+    "bad_record_ids": [],
+    "generated_utc": "2026-06-24T00:41:52Z",
+    "corpus_digest": "sha256:6e58fffc1a3151e9c471f132922e15541044a636cf713d0495580466b323ef8b",
+    "n_records": 1,
+    "by_kind": {
+      "intrinsic": 1
+    },
+    "by_method": {
+      "intrinsic_audit": 1
+    },
+    "registry_verified": true,
+    "bad_admission_ids": [],
+    "admitted_probes": 17,
+    "verified": true
+  },
+  "benchmarks": [
+    {
+      "name": "MMLU-Redux (Virology)",
+      "slug": "mmlu-redux-virology",
+      "status": "degraded",
+      "verdict": "Label-error rate measured from the corpus's human annotations (single-pass): 41.00% of 100 annotated items · worst subject virology at 41%",
+      "ceiling": 0.59,
+      "intrinsic": {
+        "record_id": "sha256:a92874d80d2746a222bf3e5b71bb11e8c2b8c32832714599fa74fe3d2394bee9",
+        "dataset_version": "virology",
+        "method": "intrinsic_audit",
+        "audits": [
+          {
+            "probe_id": "dataset_hygiene",
+            "severity": "low",
+            "measured": {
+              "N": 100,
+              "canary_hits": 0,
+              "contradictory_labels": 0,
+              "empty": 0,
+              "exact_dups": 0,
+              "near_dups": 0
+            },
+            "reliability": {
+              "basis": "Defect = exact/near duplicates, empties, canary strings; exact from the items.",
+              "calibration_version": "cc977d2381b4",
+              "probe_id": "dataset_hygiene",
+              "recall": 1.0,
+              "recall_hi": 1.0,
+              "recall_lo": 0.34237195288961925,
+              "recall_n": 2,
+              "source": null,
+              "specificity": 1.0,
+              "specificity_hi": 1.0,
+              "specificity_lo": 0.34237195288961925,
+              "specificity_n": 2,
+              "tier": "structural_exact",
+              "tier_label": "Structural / exact-by-construction ground truth"
+            }
+          },
+          {
+            "probe_id": "coverage_distribution",
+            "severity": "info",
+            "measured": {
+              "basis": null
+            },
+            "reliability": {
+              "basis": "Defect = category share concentration; exact from the item labels.",
+              "calibration_version": "cc977d2381b4",
+              "probe_id": "coverage_distribution",
+              "recall": 1.0,
+              "recall_hi": 1.0,
+              "recall_lo": 0.34237195288961925,
+              "recall_n": 2,
+              "source": null,
+              "specificity": 1.0,
+              "specificity_hi": 1.0,
+              "specificity_lo": 0.34237195288961925,
+              "specificity_n": 2,
+              "tier": "structural_exact",
+              "tier_label": "Structural / exact-by-construction ground truth"
+            }
+          },
+          {
+            "probe_id": "label_error_audit",
+            "severity": "high",
+            "measured": {
+              "annotation_passes": 1,
+              "derived": "human_annotation_single_pass",
+              "effective_accuracy_ceiling": 0.59,
+              "inter_annotator_agreement": null,
+              "k": 41,
+              "n_annotated": 100,
+              "rate": 0.41,
+              "worst_subject": "virology",
+              "worst_subject_rate": 0.41
+            },
+            "reliability": {
+              "basis": "Measured directly from the corpus's per-item human annotations (a single-pass re-annotation; inter-annotator agreement unavailable) — not estimated by the model-in-the-loop probe.",
+              "calibration_version": "cc977d2381b4",
+              "probe_id": "label_error_audit",
+              "recall": null,
+              "recall_hi": null,
+              "recall_lo": null,
+              "recall_n": 0,
+              "source": "MMLU-Redux (edinburgh-dawg/mmlu-redux-2.0)",
+              "specificity": null,
+              "specificity_hi": null,
+              "specificity_lo": null,
+              "specificity_n": 0,
+              "tier": "real_labeled",
+              "tier_label": "Real human-annotated ground truth"
+            }
+          },
+          {
+            "probe_id": "item_ambiguity",
+            "severity": "high",
+            "measured": {
+              "annotation_passes": 1,
+              "derived": "human_annotation_single_pass",
+              "inter_annotator_agreement": null,
+              "k": 16,
+              "n_annotated": 100,
+              "rate": 0.16
+            },
+            "reliability": {
+              "basis": "Measured directly from the corpus's per-item human annotations (a single-pass re-annotation; inter-annotator agreement unavailable) — not estimated by the model-in-the-loop probe.",
+              "calibration_version": "cc977d2381b4",
+              "probe_id": "item_ambiguity",
+              "recall": null,
+              "recall_hi": null,
+              "recall_lo": null,
+              "recall_n": 0,
+              "source": "MMLU-Redux (edinburgh-dawg/mmlu-redux-2.0)",
+              "specificity": null,
+              "specificity_hi": null,
+              "specificity_lo": null,
+              "specificity_n": 0,
+              "tier": "real_labeled",
+              "tier_label": "Real human-annotated ground truth"
+            }
+          }
+        ]
+      },
+      "trajectory": [],
+      "trends": {
+        "benchmark": "MMLU-Redux (Virology)",
+        "slug": "mmlu-redux-virology",
+        "n_claims": 0,
+        "ceiling": 0.59,
+        "first": null,
+        "latest": null,
+        "span": null,
+        "headroom": null,
+        "over_ceiling": null,
+        "near_ceiling": null,
+        "last_gain": null,
+        "gain_within_noise": null,
+        "noise_basis": "no per-sample CIs in the claim records",
+        "slope_per_year": null,
+        "saturated": false,
+        "saturation_reasons": [],
+        "notes": [
+          "No dated claims recorded yet."
+        ]
+      }
+    }
+  ],
+  "leaderboard": {
+    "results": [],
+    "benchmarks": [
+      {
+        "name": "MMLU-Redux (Virology)",
+        "slug": "mmlu-redux-virology",
+        "dataset_version": "virology",
+        "ceiling": 0.59,
+        "n_claims": 0,
+        "label_error": {
+          "rate": 0.41,
+          "k": 41,
+          "n": 100
+        },
+        "ambiguity": {
+          "rate": 0.16,
+          "k": 16,
+          "n": 100
+        },
+        "sensitivity": null,
+        "reliability": null,
+        "remediation": {
+          "verdict_impact": {
+            "known": false,
+            "ranking_stable": null,
+            "models_moved": null,
+            "note": "No result-sensitivity measured: cannot say whether fixing changes the verdict."
+          },
+          "actions": [
+            {
+              "probe_id": "item_ambiguity",
+              "severity": "high",
+              "tier": "review",
+              "confidence": "Medium — review",
+              "action": "Send the flagged ambiguous items to multi-annotator re-review and clarify the wording / options.",
+              "rationale": "Ambiguity is a reliable flag-for-review, but the resolution needs a human.",
+              "caveat": "the probe flags candidates; the resolution needs human judgement.",
+              "n_items_affected": 16,
+              "candidates_available": false,
+              "asserts_correction": false
+            },
+            {
+              "probe_id": "label_error_audit",
+              "severity": "high",
+              "tier": "relay_only",
+              "confidence": "Relay only",
+              "action": "Candidate label corrections (from a single-pass human annotation) are attached for the flagged items — verify each with a second annotator before changing the answer key. Do not change the key on this alone.",
+              "rationale": "We measured statistical label-error detection to be near-chance and these corrections are single-pass; asserting them would exceed our validated reliability.",
+              "caveat": "surfaced from a single-pass annotation — a candidate to verify with a second annotator, not a determination. Do not change the answer key on this alone.",
+              "n_items_affected": 41,
+              "candidates_available": true,
+              "asserts_correction": false
+            },
+            {
+              "probe_id": "dataset_hygiene",
+              "severity": "low",
+              "tier": "instrument_fix",
+              "confidence": "High confidence",
+              "action": "Clean the dataset: remove exact / near-duplicate items, resolve contradictory labels, drop empty items, investigate any canary hits.",
+              "rationale": "Duplicates, empties and contradictions are detected exactly and are unambiguous to fix.",
+              "caveat": "a structural property of the instrument the probe measures directly — safe to act on.",
+              "n_items_affected": null,
+              "candidates_available": false,
+              "asserts_correction": false
+            }
+          ],
+          "n_actions": 3,
+          "n_instrument_fix": 1,
+          "n_relay_only": 1,
+          "summary": "3 action(s), 1 high-confidence instrument fix(es), 1 relay-only candidate(s) to verify"
+        },
+        "worst_subject": "virology",
+        "status_word": "degraded",
+        "status_color": "broken",
+        "method": "intrinsic_audit",
+        "record_id": "sha256:a92874d80d2746a222bf3e5b71bb11e8c2b8c32832714599fa74fe3d2394bee9"
+      }
+    ],
+    "tally": {
+      "over_ceiling": 0,
+      "near_ceiling": 0,
+      "unverifiable": 0,
+      "ok": 0
+    },
+    "near_band": 0.02,
+    "n_results": 0
+  },
+  "method": {
+    "policy": {
+      "min_recall": 0.8,
+      "min_specificity": 0.8,
+      "min_per_class": 2,
+      "conservative": false
+    },
+    "admitted": [
+      {
+        "probe_id": "contamination_perturb",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.43849391955098227,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:198e0d2be58aebcdf06dbc31ed4cc7d60056ce2187dca9c5253f9c2a0dbe4b67"
+      },
+      {
+        "probe_id": "coverage_distribution",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:2bea6f123f6eb2fe0259b5de274e73189e0b6968cacaa9e526c37c8edb3aaf48"
+      },
+      {
+        "probe_id": "dataset_hygiene",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:e0a94fbe7aa59217486d697ee26408b8d236919654a080210bc92964ddf3cb43"
+      },
+      {
+        "probe_id": "discrimination_saturation",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:63ede8a885625eaba8a0b36e17cefeef3dc5c32adee54b21c4fe29a855e112fe"
+      },
+      {
+        "probe_id": "elicitation_ceiling",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:e511662c2c55907b765a19d2ceb3130fd1d186236f186484d3e076ed570ce76b"
+      },
+      {
+        "probe_id": "item_ambiguity",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.43849391955098227,
+          1.0
+        ],
+        "specificity_ci": [
+          0.43849391955098227,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:70998ba31c0a2fcde1f6655d7bf240b1881693581f8b8251925eab63f8c16b60"
+      },
+      {
+        "probe_id": "label_error_audit",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.43849391955098227,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:126fc7632d7dafaa23927146bddbba2f84863d822a6a95bafe4e7f1e238fd1bf"
+      },
+      {
+        "probe_id": "model_drift",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:8a74905de4fc3effa3c77e62bf33df77252209aa970f8214b9ca19797f860b22"
+      },
+      {
+        "probe_id": "multiplicity_cherrypick",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:8147fe8154d821e9e828a84f2577156449b5c16f08f585c16cfd37e87b964585"
+      },
+      {
+        "probe_id": "option_order_bias",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:770c49aa46373bb74fbee6e8451bd7b5d1555e1f2091f660370b6165510c4a56"
+      },
+      {
+        "probe_id": "prompt_format_sensitivity",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:8d5bd76654b350f7fdc608ced22a4f6c7c1aee4aa60063a8a412582255928401"
+      },
+      {
+        "probe_id": "provenance_repro",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:9745448c7e4b3ae22d63d33927b57c0ca8b2ba8436915616c2e8faf73a5d3ffb"
+      },
+      {
+        "probe_id": "reward_hacking_eval",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:69483bf8e5fa86fe852d365202eb19a7eac62e33286fc87863fcbda48da2c6d0"
+      },
+      {
+        "probe_id": "sandbagging_paired",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:02bafcc38ae65ad93213127c9c8aa4175fd67f866edca0b4192dbee470aa1cb9"
+      },
+      {
+        "probe_id": "self_consistency",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:b1e8d718678a3800e3678e1ac8b0cb92804c1e5fd696f6542826eee173510b89"
+      },
+      {
+        "probe_id": "statistical_power",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:706e78a88be0085e358a039b17225b80ae99444295038f0ee16912705d6e9eb1"
+      },
+      {
+        "probe_id": "subgroup_power",
+        "recall": 1.0,
+        "specificity": 1.0,
+        "recall_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "specificity_ci": [
+          0.34237195288961925,
+          1.0
+        ],
+        "calibration_version": "cc977d2381b4",
+        "record_id": "sha256:53815399f4426508e8068f202e2bdec0c616428f215d0a510774b4c27dcde832"
+      }
+    ]
+  }
+}

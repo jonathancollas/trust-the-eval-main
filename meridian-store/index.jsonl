@@ -1,0 +1,1 @@
+{"record_id": "sha256:a92874d80d2746a222bf3e5b71bb11e8c2b8c32832714599fa74fe3d2394bee9", "kind": "intrinsic", "benchmark": "MMLU-Redux (Virology)", "dataset_version": "virology", "model": null, "release": null, "date": null, "method": "intrinsic_audit", "created_utc": "2026-06-24T00:41:51Z", "subject_key": "intrinsic:MMLU-Redux (Virology)@virology"}

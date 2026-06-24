@@ -1,0 +1,9 @@
+{
+  "mmlu-redux-virology": {
+    "kind": "intrinsic",
+    "benchmark": "MMLU-Redux (Virology)",
+    "n_rows": 100,
+    "fingerprint": "hf:372ea425445d51e1",
+    "last_synced_utc": "2026-06-24T00:41:51Z"
+  }
+}

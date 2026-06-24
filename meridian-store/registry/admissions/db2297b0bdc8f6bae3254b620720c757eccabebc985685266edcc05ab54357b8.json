@@ -1,0 +1,34 @@
+{
+  "schema_version": "admission/v1",
+  "record_id": "sha256:db2297b0bdc8f6bae3254b620720c757eccabebc985685266edcc05ab54357b8",
+  "created_utc": "2026-06-24T00:41:51Z",
+  "tool_version": "0.0.1",
+  "result": {
+    "probe_id": "answer_extraction_audit",
+    "admitted": false,
+    "recall": 1.0,
+    "recall_lo": 0.20654329147389294,
+    "recall_hi": 1.0,
+    "specificity": 1.0,
+    "spec_lo": 0.34237195288961925,
+    "spec_hi": 1.0,
+    "n_cases": 3,
+    "n_pos": 1,
+    "n_neg": 2,
+    "tier": "structural_exact",
+    "tier_label": "Structural / exact-by-construction ground truth",
+    "reasons": [
+      "only 1 defect case(s) (need ≥ 2)",
+      "recall 1.00 (point) ≥ 0.80",
+      "specificity 1.00 (point) ≥ 0.80"
+    ],
+    "policy": {
+      "min_recall": 0.8,
+      "min_specificity": 0.8,
+      "min_per_class": 2,
+      "conservative": false
+    },
+    "calibration_version": "cc977d2381b4",
+    "error": null
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "audits": [
+    {
+      "claims": [
+        "capability"
+      ],
+      "measured": {
+        "N": 100,
+        "canary_hits": 0,
+        "contradictory_labels": 0,
+        "empty": 0,
+        "exact_dups": 0,
+        "near_dups": 0
+      },
+      "probe_id": "dataset_hygiene",
+      "reliability": {
+        "basis": "Defect = exact/near duplicates, empties, canary strings; exact from the items.",
+        "calibration_version": "cc977d2381b4",
+        "probe_id": "dataset_hygiene",
+        "recall": 1.0,
+        "recall_hi": 1.0,
+        "recall_lo": 0.34237195288961925,
+        "recall_n": 2,
+        "source": null,
+        "specificity": 1.0,
+        "specificity_hi": 1.0,
+        "specificity_lo": 0.34237195288961925,
+        "specificity_n": 2,
+        "tier": "structural_exact",
+        "tier_label": "Structural / exact-by-construction ground truth"
+      },
+      "score": null,
+      "severity": "low",
+      "summary": "exact_dups=0, near_dups=0, contradictory_labels=0, empty=0, canary_hits=0"
+    },
+    {
+      "claims": [
+        "ranking"
+      ],
+      "measured": {
+        "basis": null
+      },
+      "probe_id": "coverage_distribution",
+      "reliability": {
+        "basis": "Defect = category share concentration; exact from the item labels.",
+        "calibration_version": "cc977d2381b4",
+        "probe_id": "coverage_distribution",
+        "recall": 1.0,
+        "recall_hi": 1.0,
+        "recall_lo": 0.34237195288961925,
+        "recall_n": 2,
+        "source": null,
+        "specificity": 1.0,
+        "specificity_hi": 1.0,
+        "specificity_lo": 0.34237195288961925,
+        "specificity_n": 2,
+        "tier": "structural_exact",
+        "tier_label": "Structural / exact-by-construction ground truth"
+      },
+      "score": null,
+      "severity": "info",
+      "summary": "no item category metadata and no MCQ answer key; coverage not assessable"
+    },
+    {
+      "claims": [
+        "capability"
+      ],
+      "measured": {
+        "annotation_passes": 1,
+        "derived": "human_annotation_single_pass",
+        "effective_accuracy_ceiling": 0.59,
+        "inter_annotator_agreement": null,
+        "k": 41,
+        "n_annotated": 100,
+        "rate": 0.41,
+        "worst_subject": "virology",
+        "worst_subject_rate": 0.41
+      },
+      "probe_id": "label_error_audit",
+      "reliability": {
+        "basis": "Measured directly from the corpus's per-item human annotations (a single-pass re-annotation; inter-annotator agreement unavailable) — not estimated by the model-in-the-loop probe.",
+        "calibration_version": "cc977d2381b4",
+        "probe_id": "label_error_audit",
+        "recall": null,
+        "recall_hi": null,
+        "recall_lo": null,
+        "recall_n": 0,
+        "source": "MMLU-Redux (edinburgh-dawg/mmlu-redux-2.0)",
+        "specificity": null,
+        "specificity_hi": null,
+        "specificity_lo": null,
+        "specificity_n": 0,
+        "tier": "real_labeled",
+        "tier_label": "Real human-annotated ground truth"
+      },
+      "score": 0.41,
+      "severity": "high",
+      "summary": "Label-error rate measured from the corpus's human annotations (single-pass): 41.00% of 100 annotated items · worst subject virology at 41%"
+    },
+    {
+      "claims": [
+        "capability"
+      ],
+      "measured": {
+        "annotation_passes": 1,
+        "derived": "human_annotation_single_pass",
+        "inter_annotator_agreement": null,
+        "k": 16,
+        "n_annotated": 100,
+        "rate": 0.16
+      },
+      "probe_id": "item_ambiguity",
+      "reliability": {
+        "basis": "Measured directly from the corpus's per-item human annotations (a single-pass re-annotation; inter-annotator agreement unavailable) — not estimated by the model-in-the-loop probe.",
+        "calibration_version": "cc977d2381b4",
+        "probe_id": "item_ambiguity",
+        "recall": null,
+        "recall_hi": null,
+        "recall_lo": null,
+        "recall_n": 0,
+        "source": "MMLU-Redux (edinburgh-dawg/mmlu-redux-2.0)",
+        "specificity": null,
+        "specificity_hi": null,
+        "specificity_lo": null,
+        "specificity_n": 0,
+        "tier": "real_labeled",
+        "tier_label": "Real human-annotated ground truth"
+      },
+      "score": 0.16,
+      "severity": "high",
+      "summary": "Item-ambiguity rate measured from the corpus's human annotations (single-pass): 16.00% of 100 annotated items"
+    }
+  ],
+  "provenance": {
+    "calibration_version": "cc977d2381b4",
+    "created_utc": "2026-06-24T00:41:51Z",
+    "inputs_hash": "sha256:7ec70880c7ce7c931d10345a094b9739bb7be238900ebc76d63d77fef0fd49f9",
+    "method": "intrinsic_audit",
+    "note": "Model-free intrinsic audit of MMLU-Redux (Virology)@virology. dataset_hygiene & coverage_distribution from a probe run on the items; label-error & item-ambiguity measured directly from the corpus's human annotations.",
+    "probe_set_version": "2eb93bda6e0c",
+    "sources": [
+      {
+        "title": "source: mmlu-redux-virology"
+      }
+    ],
+    "tool_version": "0.0.1"
+  },
+  "record_id": "sha256:a92874d80d2746a222bf3e5b71bb11e8c2b8c32832714599fa74fe3d2394bee9",
+  "schema_version": "ttev-record/1",
+  "subject": {
+    "benchmark": "MMLU-Redux (Virology)",
+    "dataset_version": "virology",
+    "date": null,
+    "kind": "intrinsic",
+    "metric": null,
+    "model": null,
+    "release": null,
+    "reported_score": null
+  }
+}

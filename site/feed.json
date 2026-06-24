@@ -1,0 +1,12 @@
+{
+  "generated_utc": "2026-06-24T00:41:52Z",
+  "n_changes": 1,
+  "changes": [
+    {
+      "type": "new_benchmark",
+      "benchmark": "MMLU-Redux (Virology)",
+      "status": "degraded"
+    }
+  ],
+  "corpus_digest": "sha256:6e58fffc1a3151e9c471f132922e15541044a636cf713d0495580466b323ef8b"
+}

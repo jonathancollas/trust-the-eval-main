@@ -1,0 +1,33 @@
+{
+  "schema_version": "admission/v1",
+  "record_id": "sha256:2bea6f123f6eb2fe0259b5de274e73189e0b6968cacaa9e526c37c8edb3aaf48",
+  "created_utc": "2026-06-24T00:41:51Z",
+  "tool_version": "0.0.1",
+  "result": {
+    "probe_id": "coverage_distribution",
+    "admitted": true,
+    "recall": 1.0,
+    "recall_lo": 0.34237195288961925,
+    "recall_hi": 1.0,
+    "specificity": 1.0,
+    "spec_lo": 0.34237195288961925,
+    "spec_hi": 1.0,
+    "n_cases": 4,
+    "n_pos": 2,
+    "n_neg": 2,
+    "tier": "structural_exact",
+    "tier_label": "Structural / exact-by-construction ground truth",
+    "reasons": [
+      "recall 1.00 (point) ≥ 0.80",
+      "specificity 1.00 (point) ≥ 0.80"
+    ],
+    "policy": {
+      "min_recall": 0.8,
+      "min_specificity": 0.8,
+      "min_per_class": 2,
+      "conservative": false
+    },
+    "calibration_version": "cc977d2381b4",
+    "error": null
+  }
+}

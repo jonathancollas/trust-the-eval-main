@@ -1,0 +1,33 @@
+{
+  "schema_version": "admission/v1",
+  "record_id": "sha256:126fc7632d7dafaa23927146bddbba2f84863d822a6a95bafe4e7f1e238fd1bf",
+  "created_utc": "2026-06-24T00:41:51Z",
+  "tool_version": "0.0.1",
+  "result": {
+    "probe_id": "label_error_audit",
+    "admitted": true,
+    "recall": 1.0,
+    "recall_lo": 0.34237195288961925,
+    "recall_hi": 1.0,
+    "specificity": 1.0,
+    "spec_lo": 0.43849391955098227,
+    "spec_hi": 1.0,
+    "n_cases": 5,
+    "n_pos": 2,
+    "n_neg": 3,
+    "tier": "real_labeled",
+    "tier_label": "Real human-annotated ground truth",
+    "reasons": [
+      "recall 1.00 (point) ≥ 0.80",
+      "specificity 1.00 (point) ≥ 0.80"
+    ],
+    "policy": {
+      "min_recall": 0.8,
+      "min_specificity": 0.8,
+      "min_per_class": 2,
+      "conservative": false
+    },
+    "calibration_version": "cc977d2381b4",
+    "error": null
+  }
+}
