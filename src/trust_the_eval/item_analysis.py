@@ -73,12 +73,15 @@ def correctness_from_predictions(predictions: Dict[str, Dict[str, Optional[str]]
     return out
 
 
-def cronbach_alpha(correctness: Dict[str, Dict[str, int]], items: List[str]) -> Optional[float]:
+def cronbach_terms(correctness: Dict[str, Dict[str, int]], items: List[str]) -> Optional[Dict[str, float]]:
+    """The exact intermediate terms behind Cronbach's alpha, so a derivation can be
+    shown without re-implementing the formula. Returns
+    ``{k, sum_item_var, total_var, alpha}`` or ``None`` when undefined.
+    Population variances across models, matching the original implementation."""
     models = list(correctness)
     k = len(items)
     if k < 2 or len(models) < 2:
         return None
-    # item variances (population) across models
     item_var = 0.0
     for i in items:
         col = [correctness[m].get(i, 0) for m in models]
@@ -89,7 +92,13 @@ def cronbach_alpha(correctness: Dict[str, Dict[str, int]], items: List[str]) -> 
     total_var = sum((t - mt) ** 2 for t in totals) / len(totals)
     if total_var <= 0:
         return None
-    return (k / (k - 1)) * (1 - item_var / total_var)
+    alpha = (k / (k - 1)) * (1 - item_var / total_var)
+    return {"k": k, "sum_item_var": item_var, "total_var": total_var, "alpha": alpha}
+
+
+def cronbach_alpha(correctness: Dict[str, Dict[str, int]], items: List[str]) -> Optional[float]:
+    t = cronbach_terms(correctness, items)
+    return t["alpha"] if t is not None else None
 
 
 def analyze(correctness: Dict[str, Dict[str, int]],

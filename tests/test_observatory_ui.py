@@ -115,12 +115,24 @@ def test_virology_is_rank_fragile_with_real_numbers(assembled):
 
 
 def test_science_covers_every_probe(assembled):
-    # Every remediation probe id has an authored science block (explained + demonstrated).
+    # Every remediation probe id has an authored science block, and every block
+    # follows the rigorous validity schema (threat -> construct -> estimator ->
+    # assumptions -> can/cannot -> calibration -> references), with an evidence tier.
     missing = set(PROBE_IDS) - set(SCI)
     assert not missing, missing
+    # the two headline metrics also carry full cards
+    assert {"result_sensitivity", "test_reliability"} <= set(SCI)
+    required = ("title", "kind", "tier", "evidence", "facet", "threat", "construct",
+                "formula", "method", "assumptions", "can", "cannot", "calibration", "refs")
     for pid, s in SCI.items():
-        for field in ("title", "measures", "formula", "method", "demo", "limits"):
+        for field in required:
             assert s.get(field), (pid, field)
+        assert s["tier"] in ("validated", "contested", "exploratory"), (pid, s["tier"])
+        assert s["kind"] in ("headline", "intrinsic", "result"), (pid, s["kind"])
+    # honesty is explicit: the weak/contested probes must be marked as such, never "validated"
+    for pid in ("contamination_perturb", "sandbagging_paired"):
+        assert SCI[pid]["tier"] != "validated", pid
+        assert "INVESTIGATE" in SCI[pid]["cannot"], pid
 
 
 def test_html_renders_and_states_the_bright_line(assembled):

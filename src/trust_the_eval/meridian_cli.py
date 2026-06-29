@@ -213,6 +213,58 @@ def _watch(args) -> int:
         return 0
 
 
+def _explain(args) -> int:
+    """Re-derive a displayed metric from the named inputs and show recompute==displayed."""
+    from .store import RecordStore
+    from .transparency import explain, format_explanation
+    sources = _load_sources(args.sources)
+    pred_rows, intr_rows = {}, {}
+    for s in sources:
+        try:
+            p = s.fetch()
+        except Exception:
+            continue
+        if not isinstance(p, dict) or p.get("benchmark") != args.benchmark:
+            continue
+        if p.get("kind") == "predictions":
+            pred_rows[args.benchmark] = p.get("rows", [])
+        elif p.get("kind") == "intrinsic":
+            intr_rows[args.benchmark] = p.get("rows", [])
+    if args.benchmark not in pred_rows and args.benchmark not in intr_rows:
+        _p("meridian explain · no sources for benchmark %r in %s" % (args.benchmark, args.sources))
+        return 2
+    store = RecordStore(args.store)
+    metrics = [args.metric] if args.metric else ["tau", "alpha", "label", "ambiguity", "top1", "accuracy"]
+    _p("meridian explain · %s" % args.benchmark)
+    rc = 0
+    for i, mtr in enumerate(metrics):
+        e = explain(store, args.benchmark, mtr,
+                    pred_rows=pred_rows.get(args.benchmark, []),
+                    intrinsic_rows=intr_rows.get(args.benchmark, []))
+        _p("")
+        _p(format_explanation(e))
+        if e.get("comparable") and not e["match"]:
+            rc = 1
+    return rc
+
+
+def _sarif(args) -> int:
+    """Emit SARIF 2.1.0 from a store (one finding per probe; no aggregate score)."""
+    from collections import Counter
+    from .store import RecordStore
+    from .emit.sarif import to_sarif, write_sarif
+    store = RecordStore(args.store)
+    log = to_sarif(store, base_uri=args.base_uri)
+    run = log["runs"][0]
+    path = write_sarif(store, args.out, base_uri=args.base_uri)
+    levels = Counter(r["level"] for r in run["results"])
+    _p("meridian sarif \u2192 %s" % path)
+    _p("  rules: %d  results: %d" % (len(run["tool"]["driver"]["rules"]), len(run["results"])))
+    _p("  levels: %s" % dict(levels))
+    _p("  (one finding per probe; evidence tier clamps level; no aggregate score)")
+    return 0
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         prog="meridian", description="Build and verify the Meridian eval-validity observatory.")
@@ -259,6 +311,20 @@ def main(argv: Optional[List[str]] = None) -> int:
     w.add_argument("--out", default="meridian-site")
     w.add_argument("--interval", type=int, default=3600)
     w.set_defaults(func=_watch)
+
+    ex = sub.add_parser("explain", help="re-derive a displayed metric from the inputs (proves recompute==displayed)")
+    ex.add_argument("metric", nargs="?", default=None,
+                    help="tau | alpha | label | ambiguity | top1 | accuracy (default: all)")
+    ex.add_argument("--benchmark", required=True, help="benchmark name, e.g. 'MMLU::virology'")
+    ex.add_argument("--sources", required=True, help="the same JSON source spec used to build the site")
+    ex.add_argument("--store", default="meridian-store")
+    ex.set_defaults(func=_explain)
+
+    sf = sub.add_parser("sarif", help="emit SARIF 2.1.0 findings from a store (for code-scanning / PR annotations)")
+    sf.add_argument("--store", default="meridian-store")
+    sf.add_argument("--out", default="site", help="directory to write meridian.sarif into")
+    sf.add_argument("--base-uri", default=None, help="base URL for rule helpUri / informationUri")
+    sf.set_defaults(func=_sarif)
 
     args = parser.parse_args(argv)
     return args.func(args)

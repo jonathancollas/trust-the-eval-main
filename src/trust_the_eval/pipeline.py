@@ -143,6 +143,11 @@ def observe(store_dir: Any, sources: List[Any], out_dir: Any,
         if (out / "classic.html").exists() and not (out / "index.html").exists():
             (out / "classic.html").replace(out / "index.html")
     api.write_api(store, out, registry=reg)
+    try:
+        from .emit.sarif import write_sarif
+        write_sarif(store, out)
+    except Exception:
+        pass
     rep = integrity.verify(store, reg)
     curr = api.export(store, reg)
     changes = diff_exports(prev, curr)

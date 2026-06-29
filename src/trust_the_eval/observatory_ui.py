@@ -23,149 +23,335 @@ from trust_the_eval.leaderboard import leaderboard
 
 SCI = {
  "result_sensitivity": {
-  "title": "Result-sensitivity", "kind": "headline",
-  "measures": "Whether correcting the gold labels changes the <b>conclusion</b> you draw — the model ranking — not merely the absolute scores.",
-  "formula": "\u03c4 = (C \u2212 D) / [n(n\u22121)/2]   \u00b7   \u0394\u2098 = acc_corr(m) \u2212 acc_orig(m)   \u00b7   p\u2081 = P(top\u20111 changes under item resampling)",
-  "method": "Re-score every model under the corrected key. Compare the original and corrected rankings with Kendall\u2019s \u03c4 (concordant minus discordant model pairs over all n(n\u22121)/2 pairs). Bootstrap the items to estimate the probability the #1 model changes.",
-  "demo": "A ranking is a permutation. \u03c4 = +1 iff the two rankings are identical (C = all pairs, D = 0) and falls as pairs invert, so \u03c4 < 1 is a literal count of how many model pairs swap order once the labels are fixed \u2014 an assumption-light measure of verdict fragility. The bootstrap turns \u201cdoes the leader change\u201d into a calibrated probability instead of a yes/no on one sample.",
-  "limits": "Corrections are single-pass (no \u03ba). The consequence is conditional: label errors flip a <i>global</i> ranking only when they are skill-discriminating and the models are close. \u03c4 says nothing about whether the corrected key is itself perfect.",
-  "refs": "Kendall (1938); criterion study on HELM\u00d7MMLU-Redux; Northcutt et al. (2021); Gema et al., MMLU-Redux (2025).",
+  "title": "Result-sensitivity", "kind": "headline", "tier": "validated",
+  "evidence": "Validated method; conditional consequence",
+  "facet": "Consequential / criterion validity of the reported result",
+  "measures": "Whether correcting the gold labels changes the conclusion (the ranking), not just the scores.",
+  "threat": "A reported leaderboard ordering may be an artefact of gold-label errors rather than a fact about the models.",
+  "construct": "The stability of the verdict (model ranking) under a justified correction of the answer key.",
+  "formula": "\u03c4 = (C \u2212 D)/[n(n\u22121)/2]  \u00b7  \u0394\u2098 = acc_corr(m) \u2212 acc_orig(m)  \u00b7  p\u2081 = P(argmax changes | item bootstrap)",
+  "method": "Re-score every model under the corrected key; compare original vs corrected rankings with Kendall\u2019s \u03c4 (concordant minus discordant model pairs); bootstrap items for the probability the #1 model changes.",
+  "assumptions": "The corrected key is at least as accurate as the original; items are exchangeable for the bootstrap; the model set is fixed.",
+  "can": "Quantify exactly how many model pairs invert under correction (\u03c4) and bound the chance the leader changes; flag a benchmark whose ordering does not survive its own measured label errors.",
+  "cannot": "Prove the corrected key is itself perfect; rank the models on their merits; transfer the verdict to a different model set. Label errors flip a GLOBAL ranking only when they are skill-discriminating AND models are close \u2014 so a stable \u03c4 is not a clean bill of health, only ranking-robustness to the measured errors.",
+  "calibration": "Planted label-flip scenarios with known skill-discrimination: the probe must report rank-fragile exactly when the planted flips are designed to reorder close models, and rank-stable otherwise.",
+  "refs": "Kendall (1938); our criterion-validity study on HELM v1.3.0\u00d7MMLU-Redux; Gema et al., MMLU-Redux (arXiv:2406.04127); Northcutt et al. (2021).",
  },
  "test_reliability": {
-  "title": "Reliability (Cronbach \u03b1)", "kind": "headline",
-  "measures": "Internal consistency: do the items behave as one coherent scale, or pull in different directions?",
-  "formula": "\u03b1 = (k / (k\u22121)) \u00b7 (1 \u2212 \u03a3\u1d62 \u03c3\u00b2\u1d62 / \u03c3\u00b2_T)",
-  "method": "Treat the k questions as items and the models as respondents. \u03c3\u00b2\u1d62 is the variance of item i (correct/incorrect across models); \u03c3\u00b2_T is the variance of total scores. Computed on the original key.",
-  "demo": "Under the classical model an observed score = true score + error, and reliability = true-variance / total-variance. If items measure one trait they covary, so \u03a3\u03c3\u00b2\u1d62 \u226a \u03c3\u00b2_T and \u03b1 \u2192 1. If items are unrelated \u2014 or anti-related, as when wrong gold makes \u201ccorrect\u201d inconsistent \u2014 \u03a3\u03c3\u00b2\u1d62 approaches or exceeds \u03c3\u00b2_T and \u03b1 drops, even negative. So a negative \u03b1 is a red flag that \u2018percent correct\u2019 is not measuring a single thing.",
-  "limits": "Assumes one dimension and tau-equivalent items; it is a lower bound on reliability, not an upper. Pooling heterogeneous subjects inflates \u03b1 through between-group spread \u2014 a high pooled \u03b1 can hide low per-subject \u03b1.",
-  "refs": "Cronbach (1951); Lord & Novick (1968).",
+  "title": "Reliability (internal consistency)", "kind": "headline", "tier": "validated",
+  "evidence": "Validated quantity; \u03b1 is only a lower bound \u2014 read with care",
+  "facet": "Internal-structure validity",
+  "measures": "Whether the items behave as one coherent scale; a negative coefficient is a red flag.",
+  "threat": "If items do not cohere, \u2018percent correct\u2019 aggregates inconsistent things and the score is not measuring one construct.",
+  "construct": "Internal consistency of the item set across respondents (here, models as respondents, questions as items).",
+  "formula": "\u03b1 = (k/(k\u22121))\u00b7(1 \u2212 \u03a3\u1d62\u03c3\u00b2\u1d62/\u03c3\u00b2_T)   (report alongside \u03c9_t, \u03bb\u2082, glb when feasible)",
+  "method": "Compute item variances \u03c3\u00b2\u1d62 and total-score variance \u03c3\u00b2_T on the original key; \u03b1 is the tau-equivalent reliability lower bound.",
+  "assumptions": "Essentially one dimension and tau-equivalent items; uncorrelated errors. With ~10 respondents the estimate is high-variance.",
+  "can": "Flag scales whose items anti-cohere (\u03b1\u22640), which co-occurs with heavy label error; give a conservative lower bound on reliability.",
+  "cannot": "Be read as the reliability or the internal structure of the test \u2014 Sijtsma (2009) shows \u03b1 is unrelated to dimensionality and never equals reliability; \u03c9_t/\u03bb\u2082/glb are more accurate. A high pooled \u03b1 can be inflated by between-subject spread and hide low per-subject \u03b1.",
+  "calibration": "Mixed-construct scenarios: a deliberately two-dimensional item set must drive \u03b1 down relative to a unidimensional control.",
+  "refs": "Cronbach (1951); Sijtsma (2009), Psychometrika 74:107\u2013120; McDonald (1999); Revelle & Zinbarg (2009); Cho (2021).",
  },
  "label_error_audit": {
-  "title": "Label / ground-truth error audit", "kind": "intrinsic",
-  "measures": "The share of items whose gold answer is genuinely wrong, has no correct option, or has several \u2014 measured from a human annotation, not inferred from model behaviour.",
-  "formula": "rate = |{ error_type \u2208 {wrong_groundtruth, no_correct_answer, multiple_correct_answers} }| / |annotated|",
-  "method": "Count the annotation\u2019s defect categories (canonicalised across casing/spacing). Clarity issues are routed to ambiguity, not counted here.",
-  "demo": "This is a direct measured proportion from expert annotation \u2014 the most reliable label-error signal available, because it does not ask a model to judge the model\u2019s own test. Its validity rests on the annotation, not on a detector.",
-  "limits": "Single-pass annotation \u2192 no inter-annotator agreement (\u03ba). We separately measured that <i>behaviour</i>-based detection (item discrimination) of label errors is near-chance (ROC-AUC \u2248 0.55), so we never substitute a statistical screen for the human annotation.",
-  "refs": "Gema et al., MMLU-Redux (2025); Northcutt et al. (2021).",
+  "title": "Label / ground-truth error audit", "kind": "intrinsic", "tier": "validated",
+  "evidence": "Validated (direct measured proportion from annotation)",
+  "facet": "Content validity of the answer key",
+  "measures": "Share of items whose gold answer is wrong, absent, or non-unique \u2014 from human annotation.",
+  "threat": "A wrong keyed answer penalises correct models and rewards wrong ones, biasing every score computed on the item.",
+  "construct": "Proportion of items carrying a ground-truth defect (wrong / no / multiple correct answers).",
+  "formula": "rate = |{error_type \u2208 {wrong_groundtruth, no_correct_answer, multiple_correct_answers}}| / |annotated|",
+  "method": "Count the annotation\u2019s defect categories (canonicalised across casing/spacing); clarity issues routed to ambiguity.",
+  "assumptions": "The annotation is competent and the categories are applied consistently.",
+  "can": "Report a faithful measured defect rate per benchmark; surface each flagged item for review; drive result-sensitivity.",
+  "cannot": "Certify a corrected answer as true (annotation is single-pass \u2014 there is NO inter-annotator agreement, so no \u03ba/Krippendorff \u03b1, and corrections are candidates, not facts). Behaviour-based detection of these errors from model agreement is near-chance (our discrimination ROC-AUC\u22480.55), so a statistical screen is not a substitute.",
+  "calibration": "Synthetic corpora with a known number of injected wrong-gold items: the measured rate must match the injected rate.",
+  "refs": "Northcutt et al., Pervasive Label Errors (arXiv:2103.14749); Gema et al., MMLU-Redux (arXiv:2406.04127); Krippendorff (2004) for the agreement we lack.",
  },
  "item_ambiguity": {
-  "title": "Item ambiguity", "kind": "intrinsic",
-  "measures": "Share of items flagged as unclear in their question or options \u2014 ambiguity, distinct from a wrong key.",
-  "formula": "rate = |{ error_type \u2208 {bad_question_clarity, bad_options_clarity} }| / |annotated|",
+  "title": "Item ambiguity", "kind": "intrinsic", "tier": "validated",
+  "evidence": "Validated measure; partly subjective \u2192 flag for review",
+  "facet": "Content validity / item quality",
+  "measures": "Share of items flagged as unclear in question or options.",
+  "threat": "An ambiguous item has no single defensible answer, so any key is partly arbitrary and the item adds noise, not signal.",
+  "construct": "Proportion of items with a presentation/clarity defect, distinct from a wrong key.",
+  "formula": "rate = |{error_type \u2208 {bad_question_clarity, bad_options_clarity}}| / |annotated|",
   "method": "Count clarity-flagged items from the human annotation, kept separate from label errors.",
-  "demo": "An ambiguous item has no single defensible answer, so any key is partly arbitrary and the item adds noise rather than signal. Separating ambiguity from wrong-key matters: the fix differs (rewrite vs. recolour the key).",
-  "limits": "Single-pass; ambiguity is partly subjective, so this is a flag for human re-review, not a determination.",
-  "refs": "Gema et al., MMLU-Redux (2025).",
+  "assumptions": "Clarity judgements are reasonably shared across competent readers.",
+  "can": "Separate \u2018ambiguous\u2019 from \u2018wrong key\u2019 (different fixes: rewrite vs re-key); flag items for human re-review.",
+  "cannot": "Be treated as objective without agreement statistics; single-pass annotation means it is a flag, not a determination.",
+  "calibration": "Corpora seeded with under-specified items: the flagged rate must rise relative to a clean control.",
+  "refs": "Gema et al., MMLU-Redux (arXiv:2406.04127); Artstein & Poesio (2008) on agreement.",
  },
  "discrimination_saturation": {
-  "title": "Discrimination & saturation", "kind": "intrinsic",
-  "measures": "Whether each item separates stronger from weaker models (discrimination), and whether the set is saturated (everyone correct).",
-  "formula": "r_pb = (M\u2081 \u2212 M\u2080) / \u03c3_T \u00b7 \u221a(p\u00b7(1\u2212p))",
-  "method": "M\u2081, M\u2080 = mean total score of models that got the item right vs wrong; \u03c3_T = sd of total scores; p = share correct.",
-  "demo": "r_pb is the correlation between getting the item right (1/0) and overall ability (total score). A good item is positively correlated \u2014 strong models get it, weak models miss it. r_pb \u2248 0 means the item carries no signal; negative means weak models do better, often a sign the keyed answer is off.",
-  "limits": "Undefined when all models agree (no variance) \u2014 exactly where universal-agreement wrong-gold items hide, which is why discrimination is <b>not</b> a reliable label-error screen. With ~10 respondents it is noisy.",
-  "refs": "Classical test theory; Lord & Novick (1968).",
+  "title": "Discrimination & saturation", "kind": "intrinsic", "tier": "validated",
+  "evidence": "Validated (classical test theory); limited at consensus",
+  "facet": "Internal-structure validity",
+  "measures": "Whether items separate strong from weak models, and whether the set is saturated.",
+  "threat": "Items everyone passes (or that anti-discriminate) carry little signal; a benchmark of such items cannot order models.",
+  "construct": "Item discrimination \u2014 the correlation between getting an item right and overall ability.",
+  "formula": "r_pb = (M\u2081 \u2212 M\u2080)/\u03c3_T \u00b7 \u221a(p(1\u2212p))",
+  "method": "M\u2081,M\u2080 = mean total score of models right vs wrong on the item; \u03c3_T = sd of totals; p = share correct.",
+  "assumptions": "Total score is a usable proxy for ability; enough variance across respondents.",
+  "can": "Identify non-discriminating or negatively-discriminating items and saturation; describe where the benchmark carries signal.",
+  "cannot": "Serve as a label-error screen (we measured this to be near-chance) and is undefined wherever all models agree \u2014 exactly where consensus wrong-gold items hide. Noisy with ~10 respondents.",
+  "calibration": "Item sets mixing known-good and known-degenerate items: discrimination must rank them accordingly.",
+  "refs": "Classical test theory; Lord & Novick (1968); our negative finding (discrimination vs label error, ROC-AUC\u22480.55).",
  },
  "coverage_distribution": {
-  "title": "Coverage / distribution", "kind": "intrinsic",
-  "measures": "Balance across the labelled categories, and balance of the MCQ answer key.",
+  "title": "Coverage / distribution", "kind": "intrinsic", "tier": "validated",
+  "evidence": "Validated structural measure",
+  "facet": "Content / generalizability validity",
+  "measures": "Balance across labelled categories and of the answer key.",
+  "threat": "Skewed categories or a dominant answer option let a model score by exploiting the distribution \u2014 a Clever-Hans shortcut \u2014 not the construct.",
+  "construct": "Concentration of the category mix and of the MCQ key.",
   "formula": "Gini(category counts) ; top_share = max_c n_c / N   (skew flagged only when \u2265 2 categories)",
-  "method": "Compute the Gini coefficient and the dominant share of the categories you provide; with a single category, assess answer-key balance instead.",
-  "demo": "Concentration in one category, or a key dominated by one option, lets a model score by exploiting the distribution rather than the construct. Gini and top_share quantify that skew directly.",
-  "limits": "Audits the categories you provide \u2014 it cannot say whether those are the right decomposition of the construct.",
-  "refs": "\u2014",
+  "method": "Compute Gini and dominant share of the provided categories; with a single category, assess answer-key balance instead.",
+  "assumptions": "The provided categories are the relevant partition.",
+  "can": "Quantify category/key imbalance that enables shortcut solutions; flag answer-key leakage by option frequency.",
+  "cannot": "Say whether the provided categories are the RIGHT decomposition of the construct (that is a content-validity judgement outside the data).",
+  "calibration": "Extreme-skew scenario (~95% one category): coverage must flag it, while a balanced control passes.",
+  "refs": "Gini (1912); shortcut/Clever-Hans evidence in benchmarks (arXiv:2410.11672).",
  },
  "dataset_hygiene": {
-  "title": "Dataset hygiene", "kind": "intrinsic",
-  "measures": "Exact and near-duplicate items, contradictory labels, empty items, and benchmark-canary leakage.",
+  "title": "Dataset hygiene", "kind": "intrinsic", "tier": "validated",
+  "evidence": "Validated (exact, structural)",
+  "facet": "Internal validity of the dataset",
+  "measures": "Exact/near-duplicate items, contradictory labels, empties, benchmark-canary leakage.",
+  "threat": "Duplicates inflate apparent sample size and reward memorisation twice; contradictory labels are self-refuting; canary strings indicate the test leaked into training.",
+  "construct": "Count of structurally defective or leaked items.",
   "formula": "exact dup = identical normalised text ; near dup = similarity \u2265 \u03b8 ; contradictory = same item, different gold",
-  "method": "Hash normalised items for exact duplicates, compare for near-duplicates, group by item to find conflicting labels, and scan for known canary strings.",
-  "demo": "Duplicates inflate apparent sample size and let memorisation pay twice; contradictory labels are self-refuting; canary strings indicate the test leaked into training. All are exactly detectable and unambiguous to fix.",
-  "limits": "Structural only \u2014 it says nothing about whether the non-duplicate items are correct.",
-  "refs": "\u2014",
+  "method": "Hash normalised items, compare for near-duplicates, group by item to find label conflicts, scan for known canaries.",
+  "assumptions": "Normalisation captures \u2018same item\u2019; similarity threshold is appropriate.",
+  "can": "Detect and localise duplicates, conflicts, empties and canary hits unambiguously \u2014 each is exactly fixable.",
+  "cannot": "Say whether the non-duplicate items are correct, or detect paraphrastic contamination (that is the contamination probe\u2019s contested job).",
+  "calibration": "Corpora with injected duplicates/conflicts/canaries: counts must match injection.",
+  "refs": "Standard de-duplication; canary methodology (e.g., BIG-bench canary string); contamination surveys.",
  },
  "statistical_power": {
-  "title": "Statistical reliability (power)", "kind": "result",
+  "title": "Statistical reliability (power)", "kind": "result", "tier": "validated",
+  "evidence": "Validated (standard inferential statistics)",
+  "facet": "Generalizability validity (sampling)",
   "measures": "Whether there are enough items for the precision being claimed.",
-  "formula": "CI half-width \u2248 z\u00b7\u221a(p(1\u2212p)/n) ; MDE from a two-proportion test",
-  "method": "Treat accuracy as a proportion and compute the sampling error for n items, and the smallest detectable difference between two models.",
-  "demo": "Accuracy is a proportion; its sampling error shrinks like 1/\u221an. Reporting a 0.5-point gap on 100 items claims precision the sample cannot support. Power analysis makes the smallest trustworthy difference explicit.",
-  "limits": "Addresses sampling error only, not bias (label errors, contamination).",
-  "refs": "\u2014",
+  "threat": "Reporting a sub-point gap on ~100 items claims precision the sample cannot support; differences may be sampling noise.",
+  "construct": "Sampling error of an accuracy and the minimum detectable difference between two models.",
+  "formula": "CI half-width \u2248 z\u00b7\u221a(p(1\u2212p)/n) ; paired two-proportion / McNemar test for model differences",
+  "method": "Treat accuracy as a proportion drawn from a super-population; use paired differences (correlated across models) to reduce variance; compute MDE.",
+  "assumptions": "Items are an exchangeable sample from a population of interest; pairing exploits shared item difficulty.",
+  "can": "State the smallest trustworthy difference, attach CIs, and flag under-powered comparisons and per-slice claims.",
+  "cannot": "Address bias (label errors, contamination); a powered comparison on a biased benchmark is still wrong.",
+  "calibration": "Known-effect simulations: the test\u2019s detection rate must track the nominal power.",
+  "refs": "Miller, Adding Error Bars to Evals (arXiv:2411.00640); McNemar (1947); Dror et al. (2018) on NLP significance.",
  },
- "option_order_bias": {"title": "MCQ option-order bias", "kind": "result",
+ "option_order_bias": {
+  "title": "MCQ option-order bias", "kind": "result", "tier": "validated",
+  "evidence": "Validated, well-replicated phenomenon",
+  "facet": "Substantive validity (response process)",
   "measures": "Whether scores change when MCQ option positions are permuted.",
-  "formula": "swing = max_perm acc \u2212 min_perm acc", "method": "Re-evaluate under shuffled option positions and report the swing.",
-  "demo": "If the same item scores differently depending on whether the answer sits at A vs D, the score is measuring position, not knowledge. Averaging over permutations removes it.",
-  "limits": "Requires re-running the eval under permutations.", "refs": "\u2014"},
- "prompt_format_sensitivity": {"title": "Prompt-format sensitivity", "kind": "result",
-  "measures": "Score variance across equivalent prompt formats.",
-  "formula": "range over formats of acc", "method": "Evaluate under several semantically-equivalent templates; report the spread.",
-  "demo": "A large swing means the number is a property of the template, not the model \u2014 so it does not transfer to any other framing of the same task.",
-  "limits": "Needs multiple format runs.", "refs": "\u2014"},
- "self_consistency": {"title": "Self-consistency / stochastic stability", "kind": "result",
+  "threat": "If the same item scores differently by where the answer sits, the score reflects position/token priors, not knowledge.",
+  "construct": "Sensitivity of accuracy to label/position permutation (selection bias).",
+  "formula": "swing = max_perm acc \u2212 min_perm acc ; recall imbalance across option IDs",
+  "method": "Re-evaluate under shuffled option positions/contents; report the swing and per-ID preference.",
+  "assumptions": "Permutations are meaning-preserving; enough items to estimate the swing.",
+  "can": "Quantify position-driven score inflation and recommend permutation-averaging (e.g., PriDe-style debiasing).",
+  "cannot": "Be assessed without re-running under permutations (needs prediction access, not just final scores).",
+  "calibration": "Items with a planted ID preference must produce a large swing; symmetric items must not.",
+  "refs": "Zheng et al., LLMs Are Not Robust MC Selectors, ICLR 2024 (arXiv:2309.03882); Changing Answer Order decreases MMLU acc (arXiv:2406.19470); Pezeshkpour & Hruschka (2023).",
+ },
+ "prompt_format_sensitivity": {
+  "title": "Prompt-format sensitivity", "kind": "result", "tier": "validated",
+  "evidence": "Validated (large measured spreads)",
+  "facet": "Substantive validity (response process)",
+  "measures": "Score variance across semantically-equivalent prompt formats.",
+  "threat": "A large swing means the number is a property of the template, not the model, so it does not transfer to any other framing.",
+  "construct": "Dispersion of accuracy over meaning-preserving formatting choices.",
+  "formula": "spread = range over formats of acc (spacing, casing, separators, delimiters)",
+  "method": "Evaluate under several equivalent templates; report the spread (a single point estimate hides it).",
+  "assumptions": "The format set preserves task meaning.",
+  "can": "Expose template-dependent scores and motivate multi-prompt reporting.",
+  "cannot": "Be reduced to one number safely; needs several format runs to estimate.",
+  "calibration": "Equivalent reformattings of a fixed item set must bound the induced spread.",
+  "refs": "Sclar et al., FormatSpread, ICLR 2024 (arXiv:2310.11324); Mizrahi et al., multi-prompt evaluation (2024).",
+ },
+ "self_consistency": {
+  "title": "Self-consistency / stochastic stability", "kind": "result", "tier": "validated",
+  "evidence": "Validated (variance is directly measurable)",
+  "facet": "Generalizability validity (reliability across runs)",
   "measures": "How much of a score is run-to-run noise under stochastic decoding.",
-  "formula": "between-run sd of acc", "method": "Repeat the eval at the same settings; quantify variance across runs.",
-  "demo": "Stochastic decoding makes a single run a sample. If repeats wander, a reported point estimate overstates certainty; fixing the seed or reporting run CIs restores honesty.",
-  "limits": "Reducible but only quantifiable with repeats.", "refs": "\u2014"},
- "judge_swap": {"title": "Judge validity (LLM-as-judge)", "kind": "result",
-  "measures": "Position bias, self-preference/collusion, and inter-judge agreement for LLM judges.",
-  "formula": "position-swap \u0394 ; Cohen/Fleiss \u03ba across judges", "method": "Swap answer order, swap judges, and measure agreement.",
-  "demo": "If a judge favours the first answer or its own family, or two judges barely agree, the metric reflects the judge, not the contestants. \u03ba and swap-deltas expose this.",
-  "limits": "Needs multiple judges / swapped runs.", "refs": "\u2014"},
- "answer_extraction_audit": {"title": "Answer-extraction / scoring audit", "kind": "result",
+  "threat": "A single stochastic run is one sample; if repeats wander, a point estimate overstates certainty.",
+  "construct": "Between-run variance of accuracy at fixed settings.",
+  "formula": "between-run sd of acc ; agreement rate across repeats",
+  "method": "Repeat the eval at identical settings; quantify variance across runs.",
+  "assumptions": "Runs differ only by sampling randomness.",
+  "can": "Quantify decoding noise and recommend fixed seeds or run-level CIs.",
+  "cannot": "Capture systematic bias; only the random component.",
+  "calibration": "High-temperature vs greedy runs: variance must shrink toward zero under greedy decoding.",
+  "refs": "Standard test-retest reliability; multi-run reporting in lm-eval (arXiv:2405.14782).",
+ },
+ "judge_swap": {
+  "title": "Judge validity (LLM-as-judge)", "kind": "result", "tier": "validated",
+  "evidence": "Validated biases; widely replicated",
+  "facet": "Substantive / criterion validity of the metric",
+  "measures": "Position bias, self-preference, and inter-judge agreement for LLM judges.",
+  "threat": "If a judge favours the first answer or its own family, or two judges barely agree, the metric reflects the judge, not the contestants.",
+  "construct": "Judge-induced systematic error and reliability.",
+  "formula": "position-swap \u0394 (consistency) ; preference-fairness ; Cohen/Fleiss \u03ba across judges",
+  "method": "Swap answer order, swap judges, and measure agreement and swap-stability.",
+  "assumptions": "Swaps preserve content; judges are exchangeable raters.",
+  "can": "Quantify position/self-preference bias and judge unreliability; flag verdicts dependent on the judge.",
+  "cannot": "Fix the judge; bias is most severe precisely when candidate quality is close.",
+  "calibration": "Order-swapped pairs with known-equal answers must reveal any positional favouritism.",
+  "refs": "Zheng et al., Judging LLM-as-a-Judge with MT-Bench (arXiv:2306.05685); position-consistency/preference-fairness metrics (Shi et al., 2024).",
+ },
+ "answer_extraction_audit": {
+  "title": "Answer-extraction / scoring audit", "kind": "result", "tier": "validated",
+  "evidence": "Validated (deterministic parsing defects)",
+  "facet": "Internal validity (instrumentation)",
   "measures": "Whether the scorer parses model responses correctly.",
-  "formula": "disagreement(extractor, gold-format)", "method": "Compare the automatic extraction against the expected answer format on a sample.",
-  "demo": "If the parser misreads a correct free-form answer as wrong, the benchmark mis-scores deterministically \u2014 a bug in the ruler, not the model.",
-  "limits": "Catches parsing defects, not conceptual ones.", "refs": "\u2014"},
- "refusal_confound": {"title": "Refusal / abstention confound", "kind": "result",
+  "threat": "If the parser misreads a correct free-form answer as wrong, the benchmark mis-scores deterministically \u2014 a bug in the ruler.",
+  "construct": "Disagreement between automatic extraction and the intended answer.",
+  "formula": "extraction error rate = |{parsed \u2260 intended}| / sample",
+  "method": "Compare the extractor against the expected answer format / probability over surface forms on a sample.",
+  "assumptions": "A reliable reference parse exists for the sample.",
+  "can": "Detect parsing/normalisation defects and surface-form competition that depress scores.",
+  "cannot": "Catch conceptual errors in the task; only the measurement plumbing.",
+  "calibration": "Responses with known formats must be extracted at the expected rate.",
+  "refs": "Holtzman et al., Surface Form Competition (arXiv:2104.08315); lm-eval extraction practices (arXiv:2405.14782).",
+ },
+ "refusal_confound": {
+  "title": "Refusal / abstention confound", "kind": "result", "tier": "validated",
+  "evidence": "Validated confound",
+  "facet": "Substantive validity (response process)",
   "measures": "Whether refusals/abstentions are scored as wrong, confounding capability.",
-  "formula": "rate of refusals counted as incorrect", "method": "Separate refusal/abstention from incorrect answers in scoring.",
-  "demo": "A model that declines is not the same as a model that is wrong; conflating them depresses the capability estimate and rewards over-confident guessing.",
-  "limits": "Requires a refusal detector.", "refs": "\u2014"},
- "multiplicity_cherrypick": {"title": "Multiplicity / cherry-picking", "kind": "result",
+  "threat": "A model that declines is not the same as a model that is wrong; conflating them depresses the capability estimate and rewards over-confident guessing.",
+  "construct": "Rate of refusals/abstentions counted as incorrect.",
+  "formula": "confound rate = |{refusal scored incorrect}| / |responses|",
+  "method": "Detect refusal/abstention and separate it from incorrect answers in scoring.",
+  "assumptions": "Refusals are reliably detectable.",
+  "can": "Disentangle \u2018won\u2019t answer\u2019 from \u2018can\u2019t answer\u2019 and correct the capability estimate.",
+  "cannot": "Read intent behind a refusal; requires a refusal detector.",
+  "calibration": "Injected refusals must be classified out of the incorrect bucket.",
+  "refs": "Abstention/selective-prediction literature; refusal handling in eval harnesses.",
+ },
+ "multiplicity_cherrypick": {
+  "title": "Multiplicity / cherry-picking", "kind": "result", "tier": "validated",
+  "evidence": "Validated (multiple-comparisons theory)",
+  "facet": "Statistical-conclusion validity",
   "measures": "Uncorrected multiple comparisons or best-of-many reporting.",
-  "formula": "family-wise error \u2191 with #comparisons", "method": "Count comparisons; apply a multiplicity correction or pre-registration check.",
-  "demo": "Run enough comparisons and some \u2018wins\u2019 appear by chance. Without correction, a headline gain may be selection, not signal.",
-  "limits": "Detects the structure, not intent.", "refs": "\u2014"},
- "model_drift": {"title": "Model drift / temporal validity", "kind": "result",
-  "measures": "Whether scores drift across model versions / time.",
-  "formula": "\u0394 acc across snapshots", "method": "Track the same eval across versions and dates.",
-  "demo": "A score attached to a moving endpoint is not reproducible; pinning snapshots and dates is required before comparing.",
-  "limits": "Needs versioned runs.", "refs": "\u2014"},
- "elicitation_ceiling": {"title": "Elicitation ceiling", "kind": "result",
+  "threat": "Run enough comparisons and some \u2018wins\u2019 appear by chance; without correction a headline gain may be selection, not signal.",
+  "construct": "Family-wise error inflation from the number of comparisons.",
+  "formula": "FWER \u2248 1 \u2212 (1\u2212\u03b1)^m ; Bonferroni/Holm-adjusted thresholds",
+  "method": "Count comparisons; apply a multiplicity correction or a pre-registration check.",
+  "assumptions": "The comparison family is identifiable.",
+  "can": "Flag under-corrected comparison sweeps and best-of-N selection.",
+  "cannot": "Detect intent; only the structure of the comparisons made.",
+  "calibration": "Null sweeps (no true effect) must trigger the flag at the expected rate.",
+  "refs": "Benjamini & Hochberg (1995); Dror et al. (2018); Gelman & Loken, garden of forking paths (2013).",
+ },
+ "model_drift": {
+  "title": "Model drift / temporal validity", "kind": "result", "tier": "contested",
+  "evidence": "Real effect; attribution is hard",
+  "facet": "Generalizability validity (over time)",
+  "measures": "Whether scores drift across model versions / dates.",
+  "threat": "A score attached to a moving endpoint is not reproducible; comparisons across drift are confounded.",
+  "construct": "Change in accuracy across model snapshots/time.",
+  "formula": "\u0394 acc across pinned snapshots",
+  "method": "Track the same eval across versions/dates with pinned identifiers.",
+  "assumptions": "Snapshots are correctly pinned and otherwise comparable.",
+  "can": "Flag comparisons made across version/time drift; require snapshot pinning.",
+  "cannot": "Attribute drift to a specific cause (model change vs eval change vs data) without controlled runs.",
+  "calibration": "Re-runs of a fixed snapshot must show ~zero drift; a swapped snapshot must show it.",
+  "refs": "Chen et al., How Is ChatGPT\u2019s Behavior Changing over Time? (arXiv:2307.09009).",
+ },
+ "elicitation_ceiling": {
+  "title": "Elicitation ceiling", "kind": "result", "tier": "exploratory",
+  "evidence": "Promising but a bound, not a point estimate",
+  "facet": "Substantive validity (capability vs elicitation)",
   "measures": "Whether a score is capped by extraction effort rather than capability.",
-  "formula": "acc(best elicitation) \u2212 acc(default)", "method": "Vary prompt/format/length/scaffolding and observe the lift.",
-  "demo": "If stronger elicitation keeps raising the score, the original number was a lower bound on capability, not the capability \u2014 the lower edge of the capability interval.",
-  "limits": "A bound, not a point estimate of \u2018true\u2019 capability.", "refs": "\u2014"},
- "contamination_perturb": {"title": "Contamination via perturbation", "kind": "result",
+  "threat": "A low score may reflect weak elicitation, not weak capability \u2014 so the number is a lower bound, not the capability.",
+  "construct": "Performance lift from improved prompting/format/scaffolding.",
+  "formula": "lift = acc(best elicitation) \u2212 acc(default)",
+  "method": "Vary prompt/format/length/scaffolding and observe whether the score keeps rising.",
+  "assumptions": "Elicitation changes do not leak answers.",
+  "can": "Establish a lower bound on capability and reveal under-elicitation.",
+  "cannot": "Yield an upper bound or a \u2018true\u2019 capability point estimate; elicitation search is open-ended.",
+  "calibration": "Known-underelicited setups must show a recoverable lift.",
+  "refs": "Capability-elicitation discussions; our axe-f review (capability as an interval).",
+ },
+ "contamination_perturb": {
+  "title": "Contamination via perturbation", "kind": "result", "tier": "contested",
+  "evidence": "Contested \u2014 near-chance on static benchmarks",
+  "facet": "Generalizability validity (memorisation)",
   "measures": "Signals of memorisation by re-testing under perturbations.",
-  "formula": "acc(original) \u2212 acc(perturbed)", "method": "Compare performance on original vs. perturbed/equivalent items.",
-  "demo": "Memorised items survive only the exact form; a drop under meaning-preserving perturbation hints at recall rather than reasoning.",
-  "limits": "On a static benchmark this barely beats chance (membership-inference ROC-AUC < 0.6); only temporal/held-out splits are reliable. Reported as <b>investigate</b>, never a verdict.",
-  "refs": "Ravaut et al. (2024); LiveCodeBench (2024)."},
- "sandbagging_paired": {"title": "Sandbagging / evaluation-awareness", "kind": "result",
+  "threat": "If a score reflects recall of seen items, it does not generalise \u2014 the benchmark over-credits the model.",
+  "construct": "Performance gap between original and meaning-preserving perturbed items.",
+  "formula": "\u0394 = acc(original) \u2212 acc(perturbed)",
+  "method": "Compare original vs perturbed/equivalent items.",
+  "assumptions": "Perturbations preserve difficulty and meaning (often violated).",
+  "can": "Raise an investigation flag where a drop suggests recall rather than reasoning.",
+  "cannot": "Serve as a verdict: on a static benchmark, behavioural contamination detection barely beats chance (membership-inference ROC-AUC<0.6); only temporal/held-out splits are reliable. Reported as INVESTIGATE, never a rating.",
+  "calibration": "Items known-seen vs known-unseen (temporal split) must separate; perturbation alone may not.",
+  "refs": "Ravaut et al., contamination survey (arXiv:2404.00699); Does Contamination Detection Work? (arXiv:2410.18966); LiveCodeBench (temporal).",
+ },
+ "sandbagging_paired": {
+  "title": "Sandbagging / evaluation-awareness", "kind": "result", "tier": "exploratory",
+  "evidence": "Exploratory \u2014 detection nascent and defeatable",
+  "facet": "Substantive validity (strategic response)",
   "measures": "Strategic underperformance / awareness of being evaluated.",
-  "formula": "acc(eval-framed) \u2212 acc(neutral-framed), paired", "method": "Compare matched items under eval-signalling vs. neutral conditions.",
-  "demo": "A model that detects evaluation can lower its score selectively; a paired gap is a hint \u2014 but a capable strategist can erase the hint.",
-  "limits": "Detection is nascent and adapts to monitoring; no settled method. Reported as <b>investigate</b>, never a verdict.",
-  "refs": "van der Weij et al. (2024); evaluation-awareness probing (2025)."},
- "reward_hacking_eval": {"title": "Reward-hacking of the eval", "kind": "result",
+  "threat": "A model that detects evaluation can lower its score selectively, so the benchmark under-credits true capability.",
+  "construct": "Paired performance gap between eval-signalling and neutral conditions.",
+  "formula": "\u0394 = acc(eval-framed) \u2212 acc(neutral-framed), paired by item",
+  "method": "Compare matched items under eval-signalling vs neutral framings.",
+  "assumptions": "Framings differ only in eval-salience; the model is not adapting to the probe.",
+  "can": "Surface a hint of strategic display for investigation.",
+  "cannot": "Confirm sandbagging: a capable strategist can erase the gap; no settled detector exists. Reported as INVESTIGATE, never a rating.",
+  "calibration": "Models instructed to underperform on a subset must widen the paired gap (an existence check, not a field detector).",
+  "refs": "van der Weij et al., Sandbagging (arXiv:2406.07358); evaluation-awareness probing (arXiv:2507.01786); noise-injection (arXiv:2412.01784).",
+ },
+ "reward_hacking_eval": {
+  "title": "Reward-hacking of the eval", "kind": "result", "tier": "contested",
+  "evidence": "Real where present; detection is pattern-based",
+  "facet": "Internal validity of the metric",
   "measures": "Responses that game the metric rather than solve the task.",
-  "formula": "exploit-pattern rate", "method": "Inspect for format exploits / shortcut tokens that the scorer rewards.",
-  "demo": "If a string that isn\u2019t a real answer scores, the metric is hackable and the number is not about the task.",
-  "limits": "Pattern-based; needs inspection.", "refs": "\u2014"},
- "subgroup_power": {"title": "Subgroup power", "kind": "result",
+  "threat": "If a string that isn\u2019t a real answer scores, the metric is hackable and the number is not about the task.",
+  "construct": "Rate of metric-exploiting responses (format exploits, shortcut tokens).",
+  "formula": "exploit rate over flagged patterns",
+  "method": "Inspect for scorer-rewarded patterns that are not valid task solutions.",
+  "assumptions": "Exploit patterns are enumerable for the metric.",
+  "can": "Flag known metric exploits and motivate stricter scoring.",
+  "cannot": "Be exhaustive; novel exploits evade pattern lists.",
+  "calibration": "Injected exploit responses must score under the naive metric and be caught by the probe.",
+  "refs": "Specification-gaming / reward-hacking literature (Skalse et al., 2022).",
+ },
+ "subgroup_power": {
+  "title": "Subgroup power", "kind": "result", "tier": "validated",
+  "evidence": "Validated (sampling statistics per slice)",
+  "facet": "Generalizability validity (per-slice)",
   "measures": "Whether per-subgroup claims have enough items.",
-  "formula": "per-slice n and CI", "method": "Compute sampling error within each reported subgroup.",
-  "demo": "A per-topic ranking on 5 items is noise; subgroup precision must be checked before slicing.",
-  "limits": "Sampling error only.", "refs": "\u2014"},
- "provenance_repro": {"title": "Provenance & reproducibility", "kind": "result",
+  "threat": "A per-topic ranking on a handful of items is noise presented as a finding.",
+  "construct": "Sampling error within each reported subgroup.",
+  "formula": "per-slice n and CI half-width \u2248 z\u00b7\u221a(p(1\u2212p)/n_slice)",
+  "method": "Compute the sampling error within each reported subgroup.",
+  "assumptions": "Slices are exchangeable samples.",
+  "can": "Flag subgroup claims too small to support a ranking.",
+  "cannot": "Address subgroup bias; only subgroup precision.",
+  "calibration": "Tiny synthetic slices must be flagged; large ones must pass.",
+  "refs": "Standard stratified-estimate statistics; Miller (arXiv:2411.00640).",
+ },
+ "provenance_repro": {
+  "title": "Provenance & reproducibility", "kind": "result", "tier": "validated",
+  "evidence": "Validated (mechanical guarantee)",
+  "facet": "Reproducibility (precondition of validity)",
   "measures": "Whether dataset version, sources and seeds are pinned so the result reproduces.",
-  "formula": "content-hash(inputs) \u2192 record id", "method": "Hash the inputs and check the verdict recomputes.",
-  "demo": "If the inputs aren\u2019t pinned, no claim on them is checkable. Content-addressing makes every number reproducible from its inputs.",
-  "limits": "Ensures reproducibility, not correctness.", "refs": "\u2014"},
+  "threat": "If the inputs are not pinned, no claim on them is checkable and the score is not reproducible.",
+  "construct": "Whether the verdict recomputes from content-addressed inputs.",
+  "formula": "content-hash(inputs) \u2192 record id ; recompute(metric) == displayed",
+  "method": "Hash the inputs to an id and re-derive each number from them.",
+  "assumptions": "Inputs are fully captured by the recorded sources.",
+  "can": "Guarantee every number is reproducible from named inputs (pipeline, not black box).",
+  "cannot": "Ensure correctness \u2014 reproducibility is necessary, not sufficient, for validity.",
+  "calibration": "Re-running the pipeline on the same inputs must reproduce ids and values bit-for-bit.",
+  "refs": "Biderman et al., Lessons from the Trenches (arXiv:2405.14782); Datasheets for Datasets (Gebru et al., 2021); Data Statements (Bender & Friedman, 2018).",
+ },
 }
 
 _SHORT_TBL = {
@@ -516,6 +702,22 @@ text{font-family:var(--mono);fill:var(--muted)}
 .sx2 .cl{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:4px}
 .sx2 p{margin:0;font-size:13.5px;line-height:1.6;color:#33312b}
 .sx2 .refs{font-size:12px;color:var(--muted)}
+.tierline{display:flex;align-items:center;gap:10px;margin:0 0 16px;flex-wrap:wrap}
+.tierbadge{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
+.tier-validated{color:var(--ok);background:var(--ok-soft);border:1px solid var(--ok-line)}
+.tier-contested{color:var(--warn);background:var(--warn-soft);border:1px solid var(--warn-line)}
+.tier-exploratory{color:var(--bad);background:var(--bad-soft);border:1px solid var(--bad-line)}
+.facet{font-size:12px;color:var(--muted);font-style:italic}
+.cc{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.ccbox{border-radius:9px;padding:11px 13px;border:1px solid var(--line)}
+.ccbox .cl{display:block;margin-bottom:4px}
+.ccbox p{margin:0;font-size:13px;line-height:1.55;color:#33312b}
+.ccbox.can{background:var(--ok-soft);border-color:var(--ok-line)}
+.ccbox.can .cl{color:var(--ok)}
+.ccbox.cannot{background:var(--bad-soft);border-color:var(--bad-line)}
+.ccbox.cannot .cl{color:var(--bad)}
+.pcard .pcardt{display:flex;gap:6px;align-items:center;margin-bottom:2px}
+@media(max-width:640px){.cc{grid-template-columns:1fr}}
 .formula{background:#faf8f1;border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:13px;color:var(--ink);overflow-x:auto}
 .csel{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-bottom:12px}
 .csel select{font-family:var(--mono);font-size:11.5px;padding:4px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
@@ -530,11 +732,24 @@ text{font-family:var(--mono);fill:var(--muted)}
 .df{color:var(--warn);font-family:var(--mono);font-size:10px}
 .cwarn{font-size:12px;color:var(--warn);background:var(--warn-soft);border:1px solid var(--warn-line);border-radius:7px;padding:8px 11px;margin-top:10px}
 .cnote{font-size:12.5px;color:var(--muted);font-style:italic}
+.cdl{font-size:12px;line-height:1.6;color:var(--muted);margin-top:12px;padding:10px 12px;background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:8px}
+.cdl .cl{display:block;margin-bottom:3px}
+.cdl a,.dlrow a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-line)}
+.cdl a:hover,.dlrow a:hover{border-bottom-color:var(--accent)}
+.dlrow{font-size:12.5px;line-height:1.65;color:#33312b;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.dlrow .cl{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:4px}
 
 .method .card{margin-bottom:16px}
 .method h3{font-size:15px;text-transform:none;letter-spacing:-.01em;color:var(--ink)}
 .method p{font-size:13.5px;color:#33312b;line-height:1.6;margin:.4em 0}
 .method .bl{border-left:3px solid var(--accent);padding-left:14px}
+.method .cmap{width:100%;font-size:12.5px;margin-top:6px}
+.method .cmap th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:7px 10px;border-bottom:1px solid var(--line)}
+.method .cmap td{vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line2);line-height:1.5;color:#33312b}
+.method .cmap td.nocell{color:var(--bad);background:var(--bad-soft)}
+.method ul.mlim{margin:.4em 0;padding-left:18px}
+.method ul.mlim li{font-size:13px;color:#33312b;line-height:1.6;margin:.35em 0}
+.method .refsblk{font-size:11.5px;color:var(--muted);line-height:1.8}
 .foot{color:var(--faint);font-family:var(--mono);font-size:11px;text-align:center;padding:34px 0 26px}
 @media(max-width:760px){.grid,.plib{grid-template-columns:1fr}.hero h1{font-size:22px}}
 </style></head>
@@ -639,19 +854,24 @@ function computePanel(pid,name){
 }
 
 let M_TAB='sci',M_PID=null,M_BENCH=null;
+function exportFooter(name){const sp=spotOf(name);const e=sp&&sp.export;if(!e)return '';
+  return `<div class="cdl"><span class="cl">Download the exact inputs</span>per-item table (every model\u2019s raw answer + correctness under both gold keys): <a href="${e.json}" download>JSON</a> \u00b7 <a href="${e.csv}" download>CSV</a> \u00b7 <a href="${e.datasheet}" download>datasheet</a> (${e.n_items} items). Re-key it and recompute, or run <span class="mono">meridian explain "${name}" &lt;metric&gt;</span>.</div>`;}
 function openProbe(pid,name){M_PID=pid;M_BENCH=name||M_BENCH||'MMLU::virology';M_TAB='sci';renderModal();}
 function closeModal(){document.getElementById('modal').innerHTML='';}
 function renderModal(){
   const s=SCI[M_PID];if(!s)return;
   const opts=DATA.spotlight_names.map(n=>`<option value="${n}" ${n===M_BENCH?'selected':''}>${n}</option>`).join('');
   const body=M_TAB==='sci'
-    ?`<div class="sx2"><span class="cl">Measures</span><p>${s.measures}</p></div>
-      <div class="sx2"><span class="cl">Formula</span><div class="formula mono">${s.formula}</div></div>
+    ?`<div class="tierline"><span class="tierbadge tier-${s.tier}">${s.evidence}</span><span class="facet">${s.facet}</span></div>
+      <div class="sx2"><span class="cl">Threat to validity</span><p>${s.threat}</p></div>
+      <div class="sx2"><span class="cl">What it measures</span><p>${s.construct}</p></div>
+      <div class="sx2"><span class="cl">Estimator</span><div class="formula mono">${s.formula}</div></div>
       <div class="sx2"><span class="cl">Method</span><p>${s.method}</p></div>
-      <div class="sx2"><span class="cl">Why it\u2019s valid</span><p>${s.demo}</p></div>
-      <div class="sx2"><span class="cl">Limits</span><p>${s.limits}</p></div>
-      <div class="sx2"><span class="cl">References</span><p class="refs">${s.refs}</p></div>`
-    :`<div class="csel">Computed on <select onchange="M_BENCH=this.value;renderModal()">${opts}</select></div>${computePanel(M_PID,M_BENCH)}`;
+      <div class="sx2"><span class="cl">Assumptions</span><p>${s.assumptions}</p></div>
+      <div class="cc"><div class="ccbox can"><span class="cl">Can conclude</span><p>${s.can}</p></div><div class="ccbox cannot"><span class="cl">Cannot conclude</span><p>${s.cannot}</p></div></div>
+      <div class="sx2"><span class="cl">Calibration in TtE</span><p>${s.calibration}</p></div>
+      <div class="sx2"><span class="cl">Primary references</span><p class="refs">${s.refs}</p></div>`
+    :`<div class="csel">Computed on <select onchange="M_BENCH=this.value;renderModal()">${opts}</select></div>${computePanel(M_PID,M_BENCH)}${exportFooter(M_BENCH)}`;
   const m=document.getElementById('modal');m.innerHTML='';
   m.appendChild($(`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="sheet">
     <div class="sheethd"><div><div class="eyebrow">Probe</div><h3>${s.title}</h3><div class="pidm mono">${M_PID}</div></div><button class="x" onclick="closeModal()">\u00d7</button></div>
@@ -763,7 +983,11 @@ function renderDetail(name){
     <div class="mono" style="font-size:11.5px;line-height:1.9;color:var(--muted)">
       record_id&nbsp;&nbsp;${prov.record_id||'\u2014'}<br/>content_hash&nbsp;${prov.hash||'\u2014'} &nbsp;<span style="color:var(--ok)">\u2713 recomputes</span><br/>
       dataset&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${r.dataset_version} &nbsp;\u00b7&nbsp; predictions: HELM v1.3.0 &nbsp;\u00b7&nbsp; corrections: MMLU-Redux (single-pass)<br/>
-      method&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result_sensitivity + test_reliability + intrinsic audit (battery_run)</div></div>`));
+      method&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result_sensitivity + test_reliability + intrinsic audit (battery_run)</div>
+    ${sp&&sp.export?`<div class="dlrow"><span class="cl">Total per-datum transparency</span>
+      Every item, every model\u2019s raw answer, and its correctness under both gold keys:
+      <a href="${sp.export.json}" download>per-item JSON</a> \u00b7 <a href="${sp.export.csv}" download>CSV</a> (${sp.export.n_items} items) \u00b7 <a href="${sp.export.datasheet}" download>datasheet</a>.<br/>
+      Recompute any headline number from these inputs: <span class="mono">meridian explain "${name}" tau|alpha|label</span>.</div>`:''}</div>`));
   w.appendChild(grid);app.appendChild(w);
 }
 
@@ -771,14 +995,14 @@ function renderProbes(){
   const app=document.getElementById('app');app.innerHTML='';
   app.appendChild($(`<section class="hero"><div class="wrap"><div class="eyebrow">Probe library</div>
     <h1>Every probe, <span class="em">explained and demonstrated</span>.</h1>
-    <div class="line">What each instrument measures, the formula, the method, why it is valid, and its honest limits. Open <b>Computation</b> on any probe to see it run, with real numbers, on a benchmark you choose.</div></div></section>`));
+    <div class="line">For each instrument: the validity threat it addresses, the construct, the estimator and its assumptions, what it <b>can</b> and <b>cannot</b> conclude, an evidence tier, and primary references. Open <b>Computation</b> to see it run, with real numbers, on a benchmark you choose.</div></div></section>`));
   const w=$(`<div class="wrap"></div>`);
   const groups=[['headline','Headline \u2014 result trust'],['intrinsic','Intrinsic \u2014 the dataset'],['result','Per-result \u2014 the measurement']];
   for(const [kind,label] of groups){
     w.appendChild($(`<div class="secthead">${label}</div>`));
     const g=$(`<div class="plib"></div>`);
     Object.keys(SCI).filter(pid=>SCI[pid].kind===kind).forEach(pid=>{const s=SCI[pid];
-      g.appendChild($(`<div class="pcard"><span class="kindt">${kind}</span><h4>${s.title}</h4><div class="pid2">${pid}</div>
+      g.appendChild($(`<div class="pcard"><div class="pcardt"><span class="kindt">${kind}</span><span class="tierbadge tier-${s.tier}">${s.tier}</span></div><h4>${s.title}</h4><div class="pid2">${pid}</div>
         <p>${s.measures}</p><div class="pbtns"><button class="pbtn primary" onclick="openProbe('${pid}')">Science</button>
         <button class="pbtn" onclick="openProbe('${pid}');M_TAB='calc';renderModal()">Computation</button></div></div>`));});
     w.appendChild(g);}
@@ -787,18 +1011,39 @@ function renderProbes(){
 
 function renderMethod(){
   const app=document.getElementById('app');app.innerHTML='';
-  app.appendChild($(`<section class="hero"><div class="wrap"><div class="eyebrow">What this instrument does \u2014 and does not \u2014 claim</div>
-    <h1>Credibility is the product.<span class="em"> We audit eval instruments and claims; we never rate a model or its safety.</span></h1></div></section>`));
+  app.appendChild($(`<section class="hero"><div class="wrap"><div class="eyebrow">Methodology \u2014 a validity argument, not a score</div>
+    <h1>We assemble <span class="em">evidence about whether a reported result can be trusted</span> \u2014 we never rate a model or its safety.</h1>
+    <div class="line">On the unitary, argument-based view of validity (Cronbach &amp; Meehl 1955; Messick 1995; Kane 2013), validity is a property of the <b>interpretation and use of a score</b> \u2014 established by marshalling evidence and confronting threats, not a number a test or a model \u201chas\u201d. Meridian is that argument, made explicit and reproducible.</div></div></section>`));
   const w=$(`<div class="wrap method" style="padding-top:22px"></div>`);
   const cards=[
-   ['The bright line','<p class="bl">Meridian measures the <b>validity of a benchmark and the results reported on it</b> \u2014 label quality, ambiguity, reliability, and how much a verdict depends on those. It does not score, rank, or certify the safety of any model. A model appears here only as a data point in whether the <i>instrument</i> can be trusted.</p>'],
-   ['No number without its computation','<p class="bl">Every value in every dossier carries a <span class="mono">\u0192</span> panel that shows the exact inputs, formula and arithmetic that produced it \u2014 the same calculation the pipeline ran, reconstructed from the record. Nothing is asserted that you cannot open and check. The Probe library demonstrates the science behind each one.</p>'],
-   ['Result-sensitivity is the headline, and it is conditional','<p>Label errors always bias absolute scores and can reshuffle near-tied models, but they flip a <b>global</b> ranking only when the errors are skill-discriminating <i>and</i> the models are close. So the verdict is reported per benchmark as rank-stable or rank-fragile \u2014 never as a blanket \u201cX% trustworthy\u201d.</p>'],
-   ['Ground truth is named honestly','<p>Corrections come from a <b>single-pass</b> annotation (MMLU-Redux); there is no second annotator, so no inter-annotator agreement (\u03ba). We surface corrections as <b>candidates to verify</b> \u2014 never as a determination that \u201cthe answer is X\u201d.</p>'],
-   ['Detection limits are stated, not hidden','<p>We measured that behaviour-based label-error detection (item discrimination) is <b>near-chance</b>. Remediation guides confidently only where a probe reliably measures a structural defect; weak or defeatable signals (contamination, sandbagging) are flagged for investigation, not ruled.</p>'],
-   ['Every number is reproducible','<p>Each audit is a content-addressed record: the inputs hash to an id and the verdict recomputes from them. These dossiers were generated from a real run over HELM v1.3.0 predictions and MMLU-Redux corrections, validated by 24,000+ end-to-end invariant checks.</p>'],
+   ['The inference we license, and audit','<p class="bl">Every dossier supports one claim: <b>the result reported on this benchmark (its ranking / scores) is a trustworthy proxy for the construct it purports to measure.</b> We gather evidence for and against that inference and surface the threats. We do <b>not</b> conclude anything about a model\u2019s ability or safety \u2014 a model appears only as a data point in whether the <i>instrument</i> can be trusted.</p>'],
+   ['Why \u201cvalidity\u201d, formally','<p>A benchmark is a <b>task + metric standing in for a phenomenon</b> (Raji et al. 2021); validity is how well the score proxies that phenomenon (Messick; Biderman et al. 2024). Construct validity is <b>unitary</b> (Cronbach &amp; Meehl 1955; Messick 1995): content, internal-structure, substantive, generalizability, external and consequential evidence are facets of <i>one</i> argument. There is no single pass/fail test for it (Bowman &amp; Dahl 2021), and a review of 445 LLM benchmarks found validity routinely unaddressed (Bean et al. 2024) \u2014 so our contribution is to operationalise the evidence-gathering, facet by facet.</p>'],
+   ['Result-sensitivity is the headline, and it is conditional','<p>Label errors always bias absolute scores and can reshuffle near-tied models, but they flip a <b>global</b> ranking only when the errors are skill-discriminating <i>and</i> the models are close. The verdict is therefore reported per benchmark as <b>rank-stable</b> or <b>rank-fragile</b> \u2014 with Kendall\u2019s \u03c4 and a bootstrap on P(top-1 changes) \u2014 never as a blanket \u201cX% trustworthy\u201d.</p>'],
   ];
   for(const [h,b] of cards)w.appendChild($(`<div class="card"><h3>${h}</h3>${b}</div>`));
+
+  // coverage map (what we cover, by validity facet \u2014 and what we explicitly do not)
+  const rows=[
+   ['Content','label-error, ambiguity, coverage/distribution','Key correctness, item clarity, category &amp; answer-key balance','Whether the construct itself is the right target (is MMLU \u201cknowledge\u201d?); item authoring'],
+   ['Internal structure','reliability (\u03b1, \u2192\u03c9/\u03bb\u2082/glb), discrimination','Item coherence and separation; a conservative reliability bound','True dimensionality \u2014 \u03b1 is only a lower bound (Sijtsma 2009); no full factor/IRT fit by default'],
+   ['Substantive (response process)','option-order, prompt-format, judge-swap, refusal, extraction','Robustness of the score to position, formatting, judge and parsing','The model\u2019s internal reasoning or intent'],
+   ['Generalizability','statistical &amp; subgroup power, self-consistency, model-drift, contamination','Sampling precision, run-to-run stability, snapshot pinning, memorisation <i>flags</i>','A contamination <b>verdict</b> from a static set (near-chance); transfer to other items / models'],
+   ['External','\u2014 (not established)','\u2014','Correlation with real-world outcomes / a nomological net \u2014 largely absent field-wide, required for full construct validity (Ostrowski et al. 2026)'],
+   ['Consequential','result-sensitivity (headline)','Whether the measured label errors change the conclusion','The downstream consequences of acting on the verdict'],
+  ];
+  let tbl='<div class="card"><h3>What we cover \u2014 and what we do not</h3><p>We organise probes by Messick\u2019s facets. The last column is the honest part: the questions this instrument does <b>not</b> answer.</p><table class="ctab cmap"><thead><tr><th>Validity facet</th><th>What we probe</th><th>What we can say</th><th>What we do <b>not</b> assess</th></tr></thead><tbody>';
+  for(const [f,p,c,n] of rows)tbl+=`<tr><td><b>${f}</b></td><td>${p}</td><td>${c}</td><td class="nocell">${n}</td></tr>`;
+  tbl+='</tbody></table></div>';
+  w.appendChild($(tbl));
+
+  const cards2=[
+   ['Measurement-theoretic limits, stated up front','<ul class="mlim"><li><b>Reliability:</b> Cronbach\u2019s \u03b1 is a lower bound under tau-equivalence \u2014 not reliability, and unrelated to internal structure (Sijtsma 2009); read \u03c9_t/\u03bb\u2082/glb beside it.</li><li><b>Latent ability / IRT:</b> ability models assume a fixed, non-strategic respondent. Under an eval-aware or sandbagging model the latent trait is not identified \u2014 <b>capability is an interval, not a point</b> (van der Weij et al. 2024; evaluation-awareness, 2025).</li><li><b>Contamination:</b> on a static benchmark, behavioural detection barely beats chance (Ravaut et al. 2024; \u201cDoes contamination detection work?\u201d 2024); only temporal / held-out splits are reliable.</li><li><b>MCQ &amp; format:</b> scores swing with option order (up to 42.9%; Zheng et al. 2024) and meaning-preserving formatting (Sclar et al. 2024) \u2014 a point estimate hides this.</li><li><b>LLM-as-judge:</b> position and self-preference bias, worst when candidates are close (Zheng et al. 2023).</li></ul>'],
+   ['Ground truth is named honestly','<p>Corrections come from a <b>single-pass</b> annotation (MMLU-Redux): no second annotator, hence no inter-annotator agreement (\u03ba / Krippendorff\u2019s \u03b1). We surface corrections as <b>candidates to verify</b>, never as a determination that \u201cthe answer is X\u201d \u2014 and we measured that behaviour-based label-error detection (item discrimination) is <b>near-chance</b>, so a statistical screen is not a substitute for re-annotation.</p>'],
+   ['Reproducibility &amp; transparency','<p class="bl"><b>No number without its computation.</b> Each audit is a <b>content-addressed record</b>: the inputs hash to an id and the verdict recomputes from them \u2014 a pipeline, not a black box. Every value carries an <span class="mono">\u0192</span> panel with the exact inputs, formula and arithmetic, and every benchmark ships a <b>per-item export</b> (JSON + CSV: every item, every model\u2019s raw answer, correctness under both gold keys) plus a <b>datasheet</b> (Gebru et al. 2021; Bender &amp; Friedman 2018). The <span class="mono">meridian explain</span> command re-derives any headline figure from those inputs and asserts it equals the displayed value. This aligns with reproducible-evaluation practice (Biderman et al. 2024). These dossiers were generated from a real run over HELM v1.3.0 \u00d7 MMLU-Redux, validated by end-to-end invariant checks.</p>'],
+   ['How to falsify our claims','<ul class="mlim"><li><b>\u201cRank-fragile\u201d:</b> take the per-item export, re-key under the corrected gold yourself and recompute Kendall\u2019s \u03c4. If the ranking does not move, we are wrong.</li><li><b>\u201cLabel-error rate\u201d:</b> pull the flagged items; if the corrections are wrong, the rate is wrong \u2014 we claim candidates, not truth, and invite a second annotator.</li><li><b>\u201c\u03b1 &lt; 0\u201d:</b> recompute from the item-variance vector shown in the \u0192 panel.</li><li><b>\u201cReproducible\u201d:</b> re-run the pipeline on the same inputs; ids and numbers must match. If they do not, that is a bug to file.</li><li><b>The probes themselves:</b> each ships a calibration scenario \u2014 a planted defect it must catch. A probe that fails its calibration does not ship.</li></ul>'],
+   ['References','<p class="refsblk">Cronbach &amp; Meehl (1955), <i>Construct validity in psychological tests</i> \u00b7 Messick (1995), <i>Validity of psychological assessment</i> \u00b7 Kane (2013), <i>Validating the interpretations and uses of test scores</i> \u00b7 Borsboom et al. (2004) \u00b7 Sijtsma (2009), Psychometrika 74:107\u2013120 \u00b7 Raji et al. (2021), arXiv:2111.15366 \u00b7 Bowman &amp; Dahl (2021) \u00b7 Jacobs &amp; Wallach (2021), FAccT \u00b7 Bean et al. (2024), 445-benchmark review \u00b7 Biderman et al. (2024), arXiv:2405.14782 \u00b7 Miller (2024), arXiv:2411.00640 \u00b7 Northcutt et al. (2021), arXiv:2103.14749 \u00b7 Gema et al., MMLU-Redux, arXiv:2406.04127 \u00b7 Zheng et al., MC selectors, arXiv:2309.03882 \u00b7 Sclar et al., FormatSpread, arXiv:2310.11324 \u00b7 Zheng et al., MT-Bench, arXiv:2306.05685 \u00b7 Ravaut et al. (2024), arXiv:2404.00699 \u00b7 van der Weij et al. (2024), arXiv:2406.07358 \u00b7 Gebru et al. (2021), Datasheets \u00b7 Bender &amp; Friedman (2018), Data Statements.</p>'],
+  ];
+  for(const [h,b] of cards2)w.appendChild($(`<div class="card"><h3>${h}</h3>${b}</div>`));
   app.appendChild(w);
 }
 
@@ -849,7 +1094,7 @@ def build_ui_site(store, sources, out_dir, title="Meridian", candidates=None):
     lightweight SPA) is left untouched. Returns the written paths.
     """
     from pathlib import Path
-    pred_rows, intrinsic_rows, models = {}, {}, None
+    pred_rows, intrinsic_rows, source_meta, models = {}, {}, {}, None
     for s in sources:
         try:
             p = s.fetch()
@@ -858,6 +1103,10 @@ def build_ui_site(store, sources, out_dir, title="Meridian", candidates=None):
         if not isinstance(p, dict):
             continue
         kind, bench = p.get("kind"), p.get("benchmark")
+        sm = source_meta.setdefault(bench, {"sources": [], "dataset_version": p.get("dataset_version")})
+        sm["sources"].append(getattr(s, "id", None))
+        if p.get("dataset_version"):
+            sm["dataset_version"] = p.get("dataset_version")
         if kind == "predictions":
             pred_rows[bench] = p.get("rows", [])
             if models is None and pred_rows[bench]:
@@ -868,10 +1117,25 @@ def build_ui_site(store, sources, out_dir, title="Meridian", candidates=None):
     spotlight = _auto_spotlight(LB, set(pred_rows))
     data = assemble_ui_data(store, pred_rows, intrinsic_rows, spotlight, models or [],
                             candidates=candidates)
+    # Total per-datum transparency: write the per-item export (JSON + CSV) and a
+    # datasheet per benchmark under out/data/, and link them from the data dict.
+    # Single source of truth: write_transparency re-derives from the same canonical
+    # functions, so the export cannot diverge from what the dossiers display.
+    try:
+        from .transparency import write_transparency
+        exports = write_transparency(out_dir, store, pred_rows, intrinsic_rows, source_meta)
+    except Exception:
+        exports = {}
+    for row in data.get("portfolio", []):
+        row["export"] = exports.get(row["name"])
+    for nm, sp in (data.get("spotlight") or {}).items():
+        if isinstance(sp, dict):
+            sp["export"] = exports.get(nm)
+    data["has_exports"] = bool(exports)
     html = build_ui_html(data)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     index = out / "index.html"
     index.write_text(html, encoding="utf-8")
     (out / "observatory-data.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-    return {"index": str(index), "data": str(out / "observatory-data.json")}
+    return {"index": str(index), "data": str(out / "observatory-data.json"), "exports": exports}
