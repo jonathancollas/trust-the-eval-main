@@ -199,6 +199,12 @@ def test_build_ui_site_from_store_and_sources(tmp_path):
     # auto-spotlight is data-driven and picks the rank-fragile benchmark for contrast
     assert "MMLU::virology" in html
     assert Path(res["data"]).exists()
+    # the lineage drill-down is emitted alongside the observatory and linked from its nav
+    assert "lineage.html" in html                       # nav link present
+    assert res.get("lineage") and Path(res["lineage"]).exists()
+    lh = Path(res["lineage"]).read_text(encoding="utf-8")
+    assert "Per-datum lineage" in lh and "<details>" in lh and "τ = <b>" in lh
+    assert "no model is scored" in lh.lower() and "<script" not in lh
 
 
 def test_auto_spotlight_prefers_rank_fragile(tmp_path):

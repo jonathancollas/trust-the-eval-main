@@ -760,6 +760,7 @@ text{font-family:var(--mono);fill:var(--muted)}
     <button id="nav-portfolio" class="on" onclick="go('portfolio')">Portfolio</button>
     <button id="nav-probes" onclick="go('probes')">Probe library</button>
     <button id="nav-method" onclick="go('method')">Methodology</button>
+    <button id="nav-lineage" onclick="location.href='lineage.html'">Lineage</button>
   </nav>
 </div></header>
 <main id="app"></main>
@@ -1138,4 +1139,16 @@ def build_ui_site(store, sources, out_dir, title="Meridian", candidates=None):
     index = out / "index.html"
     index.write_text(html, encoding="utf-8")
     (out / "observatory-data.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-    return {"index": str(index), "data": str(out / "observatory-data.json"), "exports": exports}
+    # The lineage drill-down: every corrected item traced raw->verdict, from the real
+    # lineage function. Wrapped so it can never break the main observatory build.
+    lineage_path = None
+    try:
+        from .lineage_view import render_lineage_html
+        lh = render_lineage_html(pred_rows, intrinsic_rows, title=title + " — lineage", iters=600)
+        lp = out / "lineage.html"
+        lp.write_text(lh, encoding="utf-8")
+        lineage_path = str(lp)
+    except Exception:
+        lineage_path = None
+    return {"index": str(index), "data": str(out / "observatory-data.json"),
+            "exports": exports, "lineage": lineage_path}

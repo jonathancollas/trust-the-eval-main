@@ -23,8 +23,8 @@ from trust_the_eval.admission import ProbeRegistry
 from trust_the_eval.api import export as api_export
 from trust_the_eval.calibration import has_scenarios
 from trust_the_eval.calibration.realworld import (DEFECT_ERROR_TYPES,
-                                                  AMBIGUITY_ERROR_TYPES,
                                                   canonical_error_type)
+from trust_the_eval.corrections import apply_policy
 from trust_the_eval.leaderboard import leaderboard
 from trust_the_eval.probe import all_probes
 from trust_the_eval.record import ValidityRecord
@@ -116,24 +116,13 @@ for p in sorted(glob.glob(os.path.join(ANN, "mmlu_*.csv"))):
         pm = pbyq.get(nq(r["question"]))
         if pm is None or orig is None:
             continue
-        cat = canonical_error_type(r.get("error_type"))
-        parsed = parse_corr(r.get("correct_answer"), ch) if cat in (
-            "wrong_groundtruth", "multiple_correct_answers") else None
-        if cat in (None, "ok", "bad_question_clarity", "bad_options_clarity", "expert"):
-            corr, scor = {orig}, True
-        elif cat == "wrong_groundtruth":
-            corr, scor = (parsed, True) if parsed else ({orig}, False)
-        elif cat == "multiple_correct_answers":
-            corr, scor = ({orig} | (parsed or set())), True
-        elif cat == "no_correct_answer":
-            corr, scor = {orig}, False
-        else:
-            corr, scor = {orig}, True
-        if not scor:
+        # single source of truth: the declared correction policy decides the gold
+        dec = apply_policy(r.get("error_type"), orig, r.get("correct_answer"), ch)
+        if not dec.scored:
             continue
         iid = "%s::%s::%d" % (subj, nq(r["question"])[:48], ai)
         prows.append({"item": iid, "subject": subj,
-                      "original_gold": [orig], "corrected_gold": sorted(corr),
+                      "original_gold": [orig], "corrected_gold": dec.corrected_gold,
                       "preds": pm})
     intrinsic_rows[subj] = irows
     pred_rows[subj] = prows

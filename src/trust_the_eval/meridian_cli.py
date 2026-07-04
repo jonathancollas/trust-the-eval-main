@@ -265,6 +265,239 @@ def _sarif(args) -> int:
     return 0
 
 
+def _policy(args) -> int:
+    from .corrections import render_policy_table
+    _p(render_policy_table())
+    return 0
+
+
+def _lineage(args) -> int:
+    import json as _json
+    from .lineage import format_lineage, lineage
+    sources = _load_sources(args.sources)
+    pred_rows, intr_rows = [], []
+    for s in sources:
+        try:
+            p = s.fetch()
+        except Exception:
+            continue
+        if not isinstance(p, dict) or p.get("benchmark") != args.benchmark:
+            continue
+        if p.get("kind") == "predictions":
+            pred_rows = p.get("rows", [])
+        elif p.get("kind") == "intrinsic":
+            intr_rows = p.get("rows", [])
+    if not pred_rows:
+        _p("meridian lineage · no predictions for benchmark %r in %s" % (args.benchmark, args.sources))
+        return 2
+    item = args.item
+    if item is None:
+        changed = [r["item"] for r in pred_rows
+                   if set(r.get("original_gold") or []) != set(r.get("corrected_gold") or [])]
+        pool = changed if (args.changed or changed) else [r["item"] for r in pred_rows]
+        if not pool:
+            _p("meridian lineage · no %sitems to trace" % ("changed " if args.changed else ""))
+            return 2
+        item = pool[0]
+    th = lineage(args.benchmark, item, pred_rows, intr_rows)
+    _p(_json.dumps(th.to_dict(), ensure_ascii=False, indent=2) if args.json else format_lineage(th))
+    return 0
+
+
+def _read_json_rows(path: str):
+    import json
+    txt = open(path, encoding="utf-8").read().strip()
+    if not txt:
+        return []
+    if path.endswith(".jsonl") or (txt[0] != "[" and "\n" in txt):
+        return [json.loads(ln) for ln in txt.splitlines() if ln.strip()]
+    data = json.loads(txt)
+    return data if isinstance(data, list) else data.get("rows", [data])
+
+
+def _import_corrections(args) -> int:
+    import json
+    import os
+    from .ingest import format_journal, ingest_mmlu_redux, ingest_platinum
+    if args.format not in ("mmlu-redux", "platinum"):
+        _p("meridian import-corrections · --format must be mmlu-redux or platinum")
+        return 2
+    rows = _read_json_rows(args.infile)
+    if args.format == "platinum":
+        corr, _intr, journal = ingest_platinum(rows, subject=args.subject)
+    else:
+        corr, _intr, journal = ingest_mmlu_redux(rows, subject=args.subject)
+    os.makedirs(args.out, exist_ok=True)
+    by_subj = {}
+    for r in corr:
+        d = by_subj.setdefault(r.subject, {"corr": [], "intr": []})
+        d["corr"].append(r.to_dict())
+        d["intr"].append(r.intrinsic())
+    for subj, d in by_subj.items():
+        slug = str(subj).lower().replace(" ", "_")
+        with open(os.path.join(args.out, "mmlu_%s_intrinsic.json" % slug), "w", encoding="utf-8") as f:
+            json.dump(d["intr"], f, ensure_ascii=False, indent=2)
+        with open(os.path.join(args.out, "mmlu_%s_corrections.json" % slug), "w", encoding="utf-8") as f:
+            json.dump(d["corr"], f, ensure_ascii=False, indent=2)
+    with open(os.path.join(args.out, "import_journal.json"), "w", encoding="utf-8") as f:
+        json.dump(journal, f, ensure_ascii=False, indent=2)
+    n_changed = sum(1 for r in corr if r.changed)
+    n_dropped = sum(1 for r in corr if not r.scored)
+    _p("meridian import-corrections · %d items across %d subjects → %s"
+       % (len(corr), len(by_subj), args.out))
+    _p("  changed: %d · dropped (not scorable): %d · kept: %d"
+       % (n_changed, n_dropped, len(corr) - n_changed - n_dropped))
+    _p("  files: mmlu_<subject>_intrinsic.json · mmlu_<subject>_corrections.json · import_journal.json")
+    if args.journal:
+        _p("")
+        _p(format_journal(journal, limit=8, source=args.format))
+    return 0
+
+
+def _load_gold_map(corrections_dir: str):
+    import glob
+    import json
+    import os
+    gm = {}
+    for fp in glob.glob(os.path.join(corrections_dir, "*_corrections.json")):
+        try:
+            recs = json.load(open(fp, encoding="utf-8"))
+        except Exception:
+            continue
+        for r in recs:
+            gm[r["item"]] = {"original_gold": r.get("original_gold"),
+                             "corrected_gold": r.get("corrected_gold"),
+                             "scored": r.get("scored", True)}
+    return gm
+
+
+def _import_predictions(args) -> int:
+    import json
+    import os
+    from .ingest import (format_predictions_journal, ingest_helm,
+                         ingest_inspect, ingest_lm_eval, ingest_lm_eval_freeform,
+                         stamp_predictions)
+    if args.format not in ("lm-eval", "helm", "inspect"):
+        _p("meridian import-predictions · --format must be lm-eval, helm, or inspect")
+        return 2
+    samples_by_model = {}
+    for spec in (args.samples or []):
+        name, _, path = spec.partition("=")
+        if not path:
+            path, name = name, os.path.splitext(os.path.basename(name))[0]
+        if args.format == "helm":
+            samples_by_model[name] = json.load(open(path, encoding="utf-8"))
+        elif args.format == "inspect":
+            if path.endswith(".eval"):
+                try:
+                    from inspect_ai.log import read_eval_log
+                except Exception:
+                    _p("meridian import-predictions · reading .eval directly needs inspect_ai installed.")
+                    _p("  Either `pip install inspect_ai`, or run `inspect log dump %s > out.json` and pass the JSON." % path)
+                    return 2
+                log = read_eval_log(path)
+                samples_by_model[name] = log.model_dump(mode="json") if hasattr(log, "model_dump") else log
+            else:
+                samples_by_model[name] = json.load(open(path, encoding="utf-8"))
+        else:
+            samples_by_model[name] = _read_json_rows(path)
+    if not samples_by_model:
+        _p("meridian import-predictions · pass at least one --samples MODEL=PATH")
+        return 2
+    if args.format == "helm":
+        pred_rows, journal = ingest_helm(samples_by_model, subject=args.subject)
+    elif args.format == "inspect":
+        pred_rows, journal = ingest_inspect(samples_by_model, subject=args.subject)
+    elif args.answers == "freeform":
+        pred_rows, journal = ingest_lm_eval_freeform(samples_by_model, subject=args.subject)
+    else:
+        pred_rows, journal = ingest_lm_eval(samples_by_model, subject=args.subject)
+
+    dropped = []
+    if args.corrections:
+        gm = _load_gold_map(args.corrections)
+        bare = [{"item": r["item"], "subject": r["subject"], "preds": r["preds"]} for r in pred_rows]
+        pred_rows, dropped = stamp_predictions(bare, gm)
+
+    os.makedirs(args.out, exist_ok=True)
+    by_subj = {}
+    for r in pred_rows:
+        by_subj.setdefault(r["subject"], []).append(r)
+    for subj, rows in by_subj.items():
+        slug = str(subj).lower().replace(" ", "_")
+        with open(os.path.join(args.out, "mmlu_%s_predictions.json" % slug), "w", encoding="utf-8") as f:
+            json.dump(rows, f, ensure_ascii=False, indent=2)
+    with open(os.path.join(args.out, "predictions_journal.json"), "w", encoding="utf-8") as f:
+        json.dump(journal, f, ensure_ascii=False, indent=2)
+    _p("meridian import-predictions · %d items · %d models · %d subjects → %s"
+       % (len(pred_rows), len(samples_by_model), len(by_subj), args.out))
+    if args.corrections:
+        _p("  joined with corrections in %s · dropped (not scorable): %d" % (args.corrections, len(dropped)))
+    _p("  files: mmlu_<subject>_predictions.json · predictions_journal.json")
+    if args.journal:
+        _p("")
+        _p(format_predictions_journal(journal, limit=8, source=args.format))
+    return 0
+
+
+def _lineage_site(args) -> int:
+    import os
+    from .lineage_view import render_lineage_html
+    sources = _load_sources(args.sources)
+    pred_rows, intrinsic_rows = {}, {}
+    for s in sources:
+        try:
+            p = s.fetch()
+        except Exception:
+            continue
+        if not isinstance(p, dict):
+            continue
+        if p.get("kind") == "predictions":
+            pred_rows[p.get("benchmark")] = p.get("rows", [])
+        elif p.get("kind") == "intrinsic":
+            intrinsic_rows[p.get("benchmark")] = p.get("rows", [])
+    if not pred_rows:
+        _p("meridian lineage-site · no predictions found in %s" % args.sources)
+        return 2
+    html = render_lineage_html(pred_rows, intrinsic_rows, iters=args.iters)
+    out = args.out
+    if out.endswith("/") or os.path.isdir(out):
+        os.makedirs(out, exist_ok=True)
+        out = os.path.join(out, "lineage.html")
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(html)
+    n = sum(len([r for r in rows
+                 if set(r.get("original_gold") or []) != set(r.get("corrected_gold") or [])])
+            for rows in pred_rows.values())
+    _p("meridian lineage-site · %d benchmarks · %d corrected items traced → %s"
+       % (len(pred_rows), n, out))
+    return 0
+
+
+def _atlas(args) -> int:
+    from .atlas import fragility_atlas, format_atlas
+    sources = _load_sources(args.sources)
+    pred, intr = {}, {}
+    for s in sources:
+        try:
+            p = s.fetch()
+        except Exception:
+            continue
+        if not isinstance(p, dict):
+            continue
+        if p.get("kind") == "predictions":
+            pred[p.get("benchmark")] = p.get("rows", [])
+        elif p.get("kind") == "intrinsic":
+            intr[p.get("benchmark")] = p.get("rows", [])
+    if not pred:
+        _p("meridian atlas · no predictions found in %s" % args.sources)
+        return 2
+    cells = {b: (pred[b], intr.get(b, [])) for b in pred}
+    atlas = fragility_atlas(cells, iters=args.iters, boot_iters=args.boot)
+    _p(format_atlas(atlas, top=args.top))
+    return 0
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         prog="meridian", description="Build and verify the Meridian eval-validity observatory.")
@@ -325,6 +558,49 @@ def main(argv: Optional[List[str]] = None) -> int:
     sf.add_argument("--out", default="site", help="directory to write meridian.sarif into")
     sf.add_argument("--base-uri", default=None, help="base URL for rule helpUri / informationUri")
     sf.set_defaults(func=_sarif)
+
+    pol = sub.add_parser("policy", help="print the declared correction policy (error_type -> action, with sources)")
+    pol.set_defaults(func=_policy)
+
+    li = sub.add_parser("lineage", help="trace one item from imported row to verdict (each step recomputable, formula + source)")
+    li.add_argument("item", nargs="?", default=None, help="item id or a substring; if omitted, a changed item is chosen")
+    li.add_argument("--benchmark", required=True, help="benchmark name, e.g. 'MMLU::college_chemistry'")
+    li.add_argument("--sources", required=True, help="the same JSON source spec used to build the site")
+    li.add_argument("--changed", action="store_true", help="when no item is given, require one whose key was corrected")
+    li.add_argument("--json", action="store_true", help="emit the thread as JSON instead of text")
+    li.set_defaults(func=_lineage)
+
+    ic = sub.add_parser("import-corrections", help="import a corrections source (MMLU-Redux) into canonical rows, with a transform journal")
+    ic.add_argument("infile", help="path to a JSON list or JSONL of raw rows")
+    ic.add_argument("--format", default="mmlu-redux", help="source format: mmlu-redux or platinum")
+    ic.add_argument("--subject", default=None, help="subject override if rows lack a subject field")
+    ic.add_argument("--out", default="imported", help="output directory")
+    ic.add_argument("--journal", action="store_true", help="print an excerpt of the transform journal")
+    ic.set_defaults(func=_import_corrections)
+
+    ip = sub.add_parser("import-predictions", help="import model predictions (lm-eval, HELM, or Inspect) into canonical rows; optionally join corrections")
+    ip.add_argument("--samples", action="append", metavar="MODEL=PATH",
+                    help="a model's samples/scenario_state/.eval file; repeat for several models")
+    ip.add_argument("--format", default="lm-eval", help="source format: lm-eval (also Open LLM Leaderboard details), helm, or inspect (.eval or dumped JSON)")
+    ip.add_argument("--answers", default="mcq", choices=["mcq", "freeform"], help="mcq (A-D letters) or freeform (answer strings, e.g. GSM8K-Platinum); lm-eval only")
+    ip.add_argument("--subject", default=None, help="subject override if samples lack a subject field")
+    ip.add_argument("--corrections", default=None, help="a directory of imported corrections to join (applies the gold decision, drops non-scorable items)")
+    ip.add_argument("--out", default="imported", help="output directory")
+    ip.add_argument("--journal", action="store_true", help="print an excerpt of the decode journal")
+    ip.set_defaults(func=_import_predictions)
+
+    ls = sub.add_parser("lineage-site", help="generate the lineage drill-down page (every corrected item, raw→verdict) from sources")
+    ls.add_argument("--sources", required=True, help="the same JSON source spec used to build the site")
+    ls.add_argument("--out", default="lineage.html", help="output HTML file (or a directory)")
+    ls.add_argument("--iters", type=int, default=2000, help="bootstrap iterations for the ranking step")
+    ls.set_defaults(func=_lineage_site)
+
+    at = sub.add_parser("atlas", help="fragility atlas across benchmarks: P(top-1 change) per cell + a test of the conditional law")
+    at.add_argument("--sources", required=True, help="the same JSON source spec used to build the site")
+    at.add_argument("--iters", type=int, default=2000, help="bootstrap iterations per cell")
+    at.add_argument("--boot", type=int, default=2000, help="bootstrap iterations for the law's correlation CIs")
+    at.add_argument("--top", type=int, default=None, help="show only the N most fragile cells")
+    at.set_defaults(func=_atlas)
 
     args = parser.parse_args(argv)
     return args.func(args)
