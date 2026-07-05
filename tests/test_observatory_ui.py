@@ -205,6 +205,28 @@ def test_build_ui_site_from_store_and_sources(tmp_path):
     lh = Path(res["lineage"]).read_text(encoding="utf-8")
     assert "Per-datum lineage" in lh and "<details>" in lh and "τ = <b>" in lh
     assert "no model is scored" in lh.lower() and "<script" not in lh
+    # the fragility atlas is emitted alongside and linked from the nav
+    assert "atlas.html" in html
+    assert res.get("atlas") and Path(res["atlas"]).exists()
+    ah = Path(res["atlas"]).read_text(encoding="utf-8")
+    assert "fragility atlas" in ah.lower() and "conditional law" in ah.lower()
+    assert "no model is scored" in ah.lower() and "<script" not in ah
+    # the detection confrontation is emitted, linked, and carries the circularity caveat
+    assert "detection.html" in html
+    assert res.get("detection") and Path(res["detection"]).exists()
+    dh = Path(res["detection"]).read_text(encoding="utf-8")
+    assert "circular" in dh.lower() and "upper bound" in dh.lower()
+    assert "<script" not in dh
+    # the standalone pages link back to the observatory (no dead-ends)
+    assert 'href="index.html"' in lh and 'href="index.html"' in ah and 'href="index.html"' in dh
+    # the Findings hub is emitted, linked, and states both results
+    assert "findings.html" in html
+    assert res.get("findings") and Path(res["findings"]).exists()
+    fh = Path(res["findings"]).read_text(encoding="utf-8")
+    assert "self-correction" in fh.lower()
+    assert 'href="atlas.html"' in fh and 'href="detection.html"' in fh
+    # cross-links connect atlas and lineage
+    assert 'href="lineage.html"' in ah and 'href="atlas.html"' in lh
 
 
 def test_auto_spotlight_prefers_rank_fragile(tmp_path):

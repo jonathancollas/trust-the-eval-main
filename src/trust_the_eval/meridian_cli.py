@@ -493,8 +493,40 @@ def _atlas(args) -> int:
         _p("meridian atlas · no predictions found in %s" % args.sources)
         return 2
     cells = {b: (pred[b], intr.get(b, [])) for b in pred}
+    if args.html:
+        from .atlas_view import render_atlas_html
+        html = render_atlas_html(pred, intr, iters=args.iters, boot_iters=args.boot)
+        with open(args.html, "w", encoding="utf-8") as f:
+            f.write(html)
+        _p("meridian atlas · wrote %s (%d cells)" % (args.html, len(cells)))
+        return 0
     atlas = fragility_atlas(cells, iters=args.iters, boot_iters=args.boot)
     _p(format_atlas(atlas, top=args.top))
+    return 0
+
+
+def _detect(args) -> int:
+    from .detection import confront, format_confront
+    sources = _load_sources(args.sources)
+    pred, intr = {}, {}
+    for s in sources:
+        try:
+            p = s.fetch()
+        except Exception:
+            continue
+        if not isinstance(p, dict):
+            continue
+        if p.get("kind") == "predictions":
+            pred[p.get("benchmark")] = p.get("rows", [])
+        elif p.get("kind") == "intrinsic":
+            intr[p.get("benchmark")] = p.get("rows", [])
+    if not pred:
+        _p("meridian detect · no predictions found in %s" % args.sources)
+        return 2
+    cells = {b: (pred[b], intr.get(b, [])) for b in pred}
+    positive = set(x.strip() for x in args.positive.split(",")) if args.positive else None
+    res = confront(cells, positive=positive, iters=args.iters)
+    _p(format_confront(res))
     return 0
 
 
@@ -600,7 +632,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     at.add_argument("--iters", type=int, default=2000, help="bootstrap iterations per cell")
     at.add_argument("--boot", type=int, default=2000, help="bootstrap iterations for the law's correlation CIs")
     at.add_argument("--top", type=int, default=None, help="show only the N most fragile cells")
+    at.add_argument("--html", default=None, help="write the atlas as an HTML page to this path instead of printing")
     at.set_defaults(func=_atlas)
+
+    dt = sub.add_parser("detect", help="detection confrontation: score label-error detectors against the ground truth (AUC + CI + precision@k)")
+    dt.add_argument("--sources", required=True, help="the same JSON source spec used to build the site")
+    dt.add_argument("--positive", default=None, help="comma-separated error_type positives (default: the label-error defect types)")
+    dt.add_argument("--iters", type=int, default=2000, help="bootstrap iterations for the AUC CIs")
+    dt.set_defaults(func=_detect)
 
     args = parser.parse_args(argv)
     return args.func(args)

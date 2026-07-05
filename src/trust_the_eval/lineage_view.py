@@ -159,6 +159,7 @@ def render_lineage_html(pred_rows: Dict[str, List[Dict[str, Any]]],
         "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">"
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
         "<title>%s</title><style>%s</style></head><body><div class=\"wrap\">"
+        "<a href=\"index.html\" style=\"display:inline-block;font-size:13px;color:var(--accent);text-decoration:none;margin-bottom:16px\">\u2190 Meridian observatory</a>"
         "<div class=\"eyebrow\">Per-datum lineage</div>"
         "<h1>The journey of every corrected item, raw to verdict.</h1>"
         "<p class=\"lede\">Each item below had its answer key moved by a human correction. "
@@ -170,6 +171,9 @@ def render_lineage_html(pred_rows: Dict[str, List[Dict[str, Any]]],
         "%s"
         "<footer>Generated from the same canonical functions the dossiers use "
         "(<span class=\"mono\">per_item_records</span>, <span class=\"mono\">result_sensitivity</span>, "
-        "the declared correction policy). Corrections are candidates, not truths.</footer>"
+        "the declared correction policy). Corrections are candidates, not truths. &nbsp;·&nbsp; "
+        "<a href=\"atlas.html\" style=\"color:var(--accent)\">See which benchmarks this reshuffles →</a> "
+        "&nbsp;·&nbsp; <a href=\"findings.html\" style=\"color:var(--accent)\">What this means →</a>"
+        "</footer>"
         "</div></body></html>"
     ) % (_e(title), _CSS, body)

@@ -24,7 +24,7 @@ from trust_the_eval.leaderboard import leaderboard
 SCI = {
  "result_sensitivity": {
   "title": "Result-sensitivity", "kind": "headline", "tier": "validated",
-  "evidence": "Validated method; conditional consequence",
+  "evidence": "Validated method; conditional-law heuristic provisional",
   "facet": "Consequential / criterion validity of the reported result",
   "measures": "Whether correcting the gold labels changes the conclusion (the ranking), not just the scores.",
   "threat": "A reported leaderboard ordering may be an artefact of gold-label errors rather than a fact about the models.",
@@ -33,8 +33,8 @@ SCI = {
   "method": "Re-score every model under the corrected key; compare original vs corrected rankings with Kendall\u2019s \u03c4 (concordant minus discordant model pairs); bootstrap items for the probability the #1 model changes.",
   "assumptions": "The corrected key is at least as accurate as the original; items are exchangeable for the bootstrap; the model set is fixed.",
   "can": "Quantify exactly how many model pairs invert under correction (\u03c4) and bound the chance the leader changes; flag a benchmark whose ordering does not survive its own measured label errors.",
-  "cannot": "Prove the corrected key is itself perfect; rank the models on their merits; transfer the verdict to a different model set. Label errors flip a GLOBAL ranking only when they are skill-discriminating AND models are close \u2014 so a stable \u03c4 is not a clean bill of health, only ranking-robustness to the measured errors.",
-  "calibration": "Planted label-flip scenarios with known skill-discrimination: the probe must report rank-fragile exactly when the planted flips are designed to reorder close models, and rank-stable otherwise.",
+  "cannot": "Prove the corrected key is itself perfect; rank the models on their merits; transfer the verdict to a different model set. A stable \u03c4 is not a clean bill of health, only ranking-robustness to the measured errors. (We once asserted a ranking flips only when errors are skill-discriminating AND models are close; our fragility atlas refuted the skill-discrimination direction on one corpus \u2014 it is protective of the #1, not aggravating \u2014 so that heuristic is PROVISIONAL and no longer drives severity. See Findings.)",
+  "calibration": "Planted label-flip scenarios: the probe must report rank-fragile exactly when the planted flips reorder the top under the item bootstrap, and rank-stable otherwise (a directly measured criterion, independent of the provisional skill-discrimination heuristic).",
   "refs": "Kendall (1938); our criterion-validity study on HELM v1.3.0\u00d7MMLU-Redux; Gema et al., MMLU-Redux (arXiv:2406.04127); Northcutt et al. (2021).",
  },
  "test_reliability": {
@@ -63,7 +63,7 @@ SCI = {
   "method": "Count the annotation\u2019s defect categories (canonicalised across casing/spacing); clarity issues routed to ambiguity.",
   "assumptions": "The annotation is competent and the categories are applied consistently.",
   "can": "Report a faithful measured defect rate per benchmark; surface each flagged item for review; drive result-sensitivity.",
-  "cannot": "Certify a corrected answer as true (annotation is single-pass \u2014 there is NO inter-annotator agreement, so no \u03ba/Krippendorff \u03b1, and corrections are candidates, not facts). Behaviour-based detection of these errors from model agreement is near-chance (our discrimination ROC-AUC\u22480.55), so a statistical screen is not a substitute.",
+  "cannot": "Certify a corrected answer as true (annotation is single-pass \u2014 there is NO inter-annotator agreement, so no \u03ba/Krippendorff \u03b1, and corrections are candidates, not facts). Behaviour-based detection is confounded here: model disagreement scores a high pooled AUC against these labels (~0.84), but MMLU-Redux surfaced its candidates from that same disagreement, so it is a circular upper bound \u2014 per-subject the signal is often near chance, and ability-weighting adds nothing (see the Detection view). A statistical screen is not a substitute for verification.",
   "calibration": "Synthetic corpora with a known number of injected wrong-gold items: the measured rate must match the injected rate.",
   "refs": "Northcutt et al., Pervasive Label Errors (arXiv:2103.14749); Gema et al., MMLU-Redux (arXiv:2406.04127); Krippendorff (2004) for the agreement we lack.",
  },
@@ -758,9 +758,12 @@ text{font-family:var(--mono);fill:var(--muted)}
   <div class="mark" onclick="go('portfolio')"><span class="glyph">meri<b>dian</b></span><span class="sub">Eval Validity Observatory</span></div>
   <nav>
     <button id="nav-portfolio" class="on" onclick="go('portfolio')">Portfolio</button>
-    <button id="nav-probes" onclick="go('probes')">Probe library</button>
+    <button id="nav-findings" onclick="location.href='findings.html'">Findings</button>
     <button id="nav-method" onclick="go('method')">Methodology</button>
+    <button id="nav-probes" onclick="go('probes')">Probe library</button>
     <button id="nav-lineage" onclick="location.href='lineage.html'">Lineage</button>
+    <button id="nav-atlas" onclick="location.href='atlas.html'">Atlas</button>
+    <button id="nav-detection" onclick="location.href='detection.html'">Detection</button>
   </nav>
 </div></header>
 <main id="app"></main>
@@ -1150,5 +1153,42 @@ def build_ui_site(store, sources, out_dir, title="Meridian", candidates=None):
         lineage_path = str(lp)
     except Exception:
         lineage_path = None
+    # The fragility atlas: P(top-1 change) per cell + the conditional-law test, from the
+    # real fragility_atlas. Also wrapped so it can never break the main build.
+    atlas_path = None
+    try:
+        from .atlas_view import render_atlas_html
+        ah = render_atlas_html(pred_rows, intrinsic_rows, title=title + " — fragility atlas",
+                               iters=600, boot_iters=1000)
+        ap = out / "atlas.html"
+        ap.write_text(ah, encoding="utf-8")
+        atlas_path = str(ap)
+    except Exception:
+        atlas_path = None
+    # The detection confrontation: label-error detectors scored against the ground truth,
+    # with the circularity caveat front and centre. Wrapped like the others.
+    detection_path = None
+    try:
+        from .detection_view import render_detection_html
+        dh = render_detection_html(pred_rows, intrinsic_rows,
+                                   title=title + " — detection confrontation", iters=800)
+        dp = out / "detection.html"
+        dp.write_text(dh, encoding="utf-8")
+        detection_path = str(dp)
+    except Exception:
+        detection_path = None
+    # The Findings hub: the two self-correcting results with recomputed numbers, linking
+    # to the atlas and detection pages. Wrapped like the others.
+    findings_path = None
+    try:
+        from .findings_view import render_findings_html
+        fh = render_findings_html(pred_rows, intrinsic_rows, title=title + " — findings",
+                                  iters=600, boot_iters=1000)
+        fp = out / "findings.html"
+        fp.write_text(fh, encoding="utf-8")
+        findings_path = str(fp)
+    except Exception:
+        findings_path = None
     return {"index": str(index), "data": str(out / "observatory-data.json"),
-            "exports": exports, "lineage": lineage_path}
+            "exports": exports, "lineage": lineage_path, "atlas": atlas_path,
+            "detection": detection_path, "findings": findings_path}

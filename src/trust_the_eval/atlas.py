@@ -197,4 +197,6 @@ def format_atlas(atlas: Dict[str, Any], top: Optional[int] = None) -> str:
         out.append("    %-24s %s   (n=%d)" % (labels[k], _f(qm.get(k), 3), qc.get(k, 0)))
     out.append("  verdict: the law %s on this corpus."
                % ("HOLDS" if law["law_holds"] else "does NOT cleanly hold"))
+    out.append("  reconciled: severity_for no longer escalates on skill_discrimination "
+               "(the refuted signal); it keys only on measured fragility (tau, p_top1).")
     return "\n".join(out)

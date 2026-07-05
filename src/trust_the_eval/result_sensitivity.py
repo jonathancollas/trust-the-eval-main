@@ -64,6 +64,17 @@ def _ranking(scores: Dict[str, float]) -> List[str]:
     return sorted(scores, key=lambda m: (-scores[m], m))
 
 
+CONDITIONAL_LAW_STATUS = (
+    "PROVISIONAL / CONTESTED. The project once asserted that a ranking is fragile when the "
+    "corrected items discriminate skill AND the models are close. The fragility atlas (N=1 "
+    "corpus, MMLU-Redux x HELM) found the discrimination term has the OPPOSITE sign — "
+    "skill-discriminating corrections are protective of the #1 (corr(P(top1), skill_disc) "
+    "~ -0.57, bootstrap CI excludes 0). So severity no longer escalates on skill_discrimination. "
+    "It is not reversed either: N=1 does not license asserting the opposite. skill_discrimination "
+    "is still reported as a measured descriptor; it simply does not drive the verdict."
+)
+
+
 def ranking_stable(result: Dict[str, object]) -> bool:
     """Does the POINT-estimate ranking hold under correction (no inversions)?
     Bootstrap top-1 fragility is reported separately (p_top1_change)."""
@@ -77,10 +88,13 @@ def severity_for(result: Dict[str, object]) -> str:
     HIGH   the point-estimate ranking reorders under correction, OR the top-1
            flips in >15% of bootstrap resamples
     MEDIUM ranking holds at the point estimate but the top-1 is a near-tie
-           (5-15% bootstrap flips) or the errors are skill-correlated with a
-           material score spread
+           (5-15% bootstrap flips)
     LOW    known errors present but the result is robust
     info   nothing changed
+
+    Severity keys only on DIRECTLY MEASURED fragility (tau reorders, p_top1). It does
+    NOT use skill_discrimination to escalate — that heuristic was refuted by the
+    fragility atlas (see CONDITIONAL_LAW_STATUS).
     """
     if result.get("n_changed_items", 0) == 0:
         return "info"
@@ -90,10 +104,7 @@ def severity_for(result: Dict[str, object]) -> str:
         return "high"
     if ptop is not None and ptop > 0.15:
         return "high"
-    sd = result.get("skill_discrimination")
-    deltas = [v["delta"] for v in result.get("per_model", {}).values()]
-    spread = (max(deltas) - min(deltas)) if deltas else 0.0
-    if (ptop is not None and ptop >= 0.05) or (sd is not None and sd > 0.3 and spread > 0.005):
+    if ptop is not None and ptop >= 0.05:
         return "medium"
     return "low"
 
