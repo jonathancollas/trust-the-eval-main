@@ -8,12 +8,12 @@ The product already has the right primitives for trust: probe documentation, per
 
 The recommended direction is to make the UI a **traceable workbench** with a persistent workflow rail and an always-available transformation ledger:
 
-1. **Ingest** — show raw source, adapter choice, field mapping, row counts, parse warnings, and a sample diff from source row to canonical `EvalItem`.
-2. **Normalize** — show schema coercions, dropped/filled fields, score/answer canonicalization, hashes, and quality gates.
-3. **Configure** — show model access, probe eligibility, probe tunables, expected cost, and why any probe will be skipped.
-4. **Run probes** — show probe lifecycle events, per-probe inputs, model calls, intermediate calculations, cache hits, and findings.
-5. **Review findings** — tie each finding to evidence rows, formulas, severity logic, caveats, and remediation.
-6. **Export/replay** — export a portable trace bundle with raw inputs, canonical artifact, transform ledger, run config, probe traces, report, and provenance hashes.
+1. **Source** — show raw source, adapter choice, raw field schema, row counts, parse warnings, and a sample of raw rows exactly as received.
+2. **Mapping** — show field mapping, before/after examples for every mapped column, dropped rows, and a diff from source row to canonical `EvalItem`.
+3. **Artifact** — show schema coercions, dropped/filled fields, score/answer canonicalization, hashes, and quality gates.
+4. **Probe plan** — show model access, probe eligibility, probe tunables, expected cost, and why any probe will be skipped.
+5. **Execution** — show probe lifecycle events, per-probe inputs, model calls, intermediate calculations, cache hits, and findings.
+6. **Evidence** — tie each finding to evidence rows, formulas, severity logic, caveats, and remediation; export a portable trace bundle with canonical artifact, transform ledger, run config, probe traces, report, and provenance hashes.
 
 ## Current-state audit
 
@@ -30,11 +30,11 @@ The recommended direction is to make the UI a **traceable workbench** with a per
 
 ### What blocks a crystal-clear workflow
 
-- The local UI describes steps but does not make them a durable, inspectable state machine. Users can do the work, but they cannot always answer "where am I, what happened before this, and what is next?".
+- The local UI describes steps but does not make them a durable, inspectable state machine. Users can do the work, but they cannot always answer "where am I, what happened before this, and what is next?"
 - Transformations are implicit. Adapter detection, Hugging Face column mapping, generic JSON loading, synthetic generation, promptfoo detection, model response derivation, score interpretation, and probe-specific reductions are not written to a unified ledger.
 - The current run state stores final findings, skipped probes, errors, progress, and cost, but not per-probe inputs, intermediate values, model requests/responses, cache decisions, or why severity thresholds fired.
 - There is no single row-level trace for the local UI equivalent to the observatory lineage page. Users can inspect items and findings, but cannot click one datum and follow it through every adapter, normalization, probe, and finding transformation.
-- Probe independence is scientifically important, but the interface can make that feel like a black box unless it distinguishes **workflow order** from **probe independence**. The UI should say: "The workflow is sequential; the probes are independent checks over the same frozen artifact.".
+- Probe independence is scientifically important, but the interface can make that feel like a black box unless it distinguishes **workflow order** from **probe independence**. The UI should say: "The workflow is sequential; the probes are independent checks over the same frozen artifact."
 - Exported reports are useful but are not yet a complete replay/audit bundle. A rigorous auditor needs raw source metadata, canonical artifact hash, transform events, probe config, code/probe version, model cache/cost metadata, findings, and environment details in one package.
 
 ## Target experience
