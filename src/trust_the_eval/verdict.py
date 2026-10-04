@@ -12,8 +12,10 @@ Rule (per claim):
   calibration evidence tier is real_labeled or structural_exact (a probe we
   can actually vouch for);
 - 'fragile'          if any HIGH (from a synthetic-floor probe) or any MEDIUM;
+- 'not assessed'     if no relevant probe produced a finding;
+- 'inconclusive'     if fewer than half of the relevant probes ran;
 - 'supportable'      otherwise — meaning *not undermined by the threats we
-  test*, never "proven correct".
+  tested with adequate coverage*, never "proven correct".
 
 This assesses the SCORE as a measurement; it does not certify the model.
 """
@@ -25,11 +27,14 @@ from .calibration.coverage import TIER_REAL, TIER_STRUCTURAL, evidence_for
 from .taxonomy import CLAIM_TYPES
 
 SEV_RANK = {"high": 3, "medium": 2, "low": 1, "info": 0}
-VERDICT_WORD = {"sup": "supportable", "fra": "fragile", "uns": "not supportable"}
+VERDICT_WORD = {"sup": "supportable", "fra": "fragile", "uns": "not supportable",
+                "na": "not assessed", "inc": "inconclusive"}
 VERDICT_MEANING = {
     "sup": "Not undermined by the validity threats we test.",
     "fra": "Usable with caveats — address the threats below before relying on it.",
     "uns": "The score can't support this claim as a clean measurement until these are fixed.",
+    "na": "No relevant probe produced a measurement.",
+    "inc": "Too few relevant probes ran to support or undermine this claim.",
 }
 
 _RELIABLE_TIERS = (TIER_REAL, TIER_STRUCTURAL)
@@ -68,9 +73,20 @@ def claim_verdict(claim: str, findings: Iterable[Any]) -> dict:
                             for f in threats)
     has_high = any(f["severity"] == "high" for f in threats)
     has_med = any(f["severity"] == "medium" for f in threats)
-    v = "uns" if has_high_reliable else ("fra" if (has_high or has_med) else "sup")
+    coverage = len({f["probe_id"] for f in rel}) / len(ids) if ids else 0.0
+    if not rel:
+        v = "na"
+    elif has_high_reliable:
+        v = "uns"
+    elif has_high or has_med:
+        v = "fra"
+    elif coverage < 0.5:
+        v = "inc"
+    else:
+        v = "sup"
     return {"verdict": v, "word": VERDICT_WORD[v], "meaning": VERDICT_MEANING[v],
-            "threats": threats, "n_probes": len(rel)}
+            "threats": threats, "n_probes": len(rel), "coverage": coverage,
+            "n_expected": len(ids)}
 
 
 def claim_verdicts(findings: Iterable[Any]) -> dict[str, dict]:

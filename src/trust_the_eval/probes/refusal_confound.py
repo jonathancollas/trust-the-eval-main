@@ -4,7 +4,7 @@ from typing import Optional
 
 from ..artifact import EvalArtifact
 from ..finding import Finding, Severity
-from ..grading import default_grader
+from ..grading import robust_grader
 from ..probe import ModelClient, Probe, register
 from ..sampling import subsample
 
@@ -37,7 +37,7 @@ class RefusalConfound(Probe):
             if not it.question.strip() or not it.answer.strip():
                 continue
             resp = it.response if it.response is not None else model.complete(it.question, temperature=0.0)
-            if default_grader(resp, it.answer):
+            if robust_grader(resp, it.answer):
                 continue
             fails += 1
             if is_refusal(resp):
@@ -137,7 +137,7 @@ RefusalConfound.DOC = ProbeDoc(
     terms=[
         ("S", "the deterministically sampled items with a non-empty question and gold (sample_size, default 50)"),
         ("r\u1d62 , g\u1d62", "the response (stored, else a fresh T=0 completion) and the gold answer for item i"),
-        ("grade(\u00b7)", "default_grader: whether the response counts as correct against the gold"),
+        ("grade(\u00b7)", "robust_grader: strict final-answer match; whether the response counts as correct against the gold"),
         ("F", "the FAILURE set \u2014 sampled items graded incorrect; |F| = fails"),
         ("is_refusal(r)", "1 if r matches the refusal pattern ('i can't/cannot/won't/am unable', \"i'm sorry, but\", 'i do not feel comfortable', 'as an ai')"),
         ("refusals", "number of failures that are refusals"),
@@ -192,7 +192,7 @@ RefusalConfound.DOC = ProbeDoc(
         "to separate can't, wasn't-elicited, and won't."
     ),
     code_refs=["trust_the_eval.probes.refusal_confound.is_refusal",
-               "trust_the_eval.grading.default_grader",
+               "trust_the_eval.grading.robust_grader",
                "trust_the_eval.sampling.subsample"],
 )
 

@@ -59,8 +59,10 @@ _TIER_WORD = {"real_labeled": "real labels", "structural_exact": "exact",
 _TIER_COLOR = {"real_labeled": "#15803d", "structural_exact": "#1d4ed8",
                "behavioral_synthetic": "#b45309"}
 _SEV_COLOR = {"high": "#dc2626", "medium": "#c2620a", "low": "#15803d", "info": "#52525b"}
-_V_BG = {"sup": "#dcfce7", "fra": "#fef3c7", "uns": "#fee2e2"}
-_V_FG = {"sup": "#15803d", "fra": "#92400e", "uns": "#b91c1c"}
+_V_BG = {"sup": "#dcfce7", "fra": "#fef3c7", "uns": "#fee2e2",
+         "na": "#f4f4f5", "inc": "#f4f4f5"}
+_V_FG = {"sup": "#15803d", "fra": "#92400e", "uns": "#b91c1c",
+         "na": "#52525b", "inc": "#52525b"}
 
 
 def _pct(v) -> str:
