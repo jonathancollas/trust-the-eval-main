@@ -43,5 +43,16 @@ def test_caching_client_can_force_real_replications():
             return "A" if self.calls % 2 else "B"
     base = Alternating()
     c = CachingClient(base)
-    assert c.complete("q", cache=False) != c.complete("q", cache=False)
+    assert c.complete_uncached("q") != c.complete_uncached("q")
     assert base.calls == 2 and c.meter.cache_hits == 0
+
+
+def test_caching_client_keys_include_provider_parameters():
+    class Echo(HonestModel):
+        def complete(self, prompt, *, temperature=0.0, **kw):
+            return str(kw.get("seed"))
+    meter = CostMeter()
+    c = CachingClient(Echo(), meter)
+    assert c.complete("same", seed=1) == "1"
+    assert c.complete("same", seed=2) == "2"
+    assert meter.calls == 2 and meter.cache_hits == 0
