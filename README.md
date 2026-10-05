@@ -96,6 +96,14 @@ python examples/run_demo.py
 pytest -q
 ```
 
+## Interface audit and traceability plan
+
+The recommended product direction for the local UI is documented in
+[`docs/interface-audit-plan.md`](docs/interface-audit-plan.md): a six-stage
+workflow rail (Source → Mapping → Artifact → Probe plan → Execution → Evidence),
+a transformation ledger, row-level lineage, probe trace drawers, and replayable
+audit bundles.
+
 ## Design principles
 
 1. **Attack the measurement, not the model.** This is the line that keeps the project meta and defensive. It is enforced at review (`CONTRIBUTING.md`).
