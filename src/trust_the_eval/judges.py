@@ -9,10 +9,15 @@ from .probe import ModelClient
 
 def judge_correct(judge: ModelClient, candidate: str, gold: str,
                   first: bool = False, author: str = "") -> int:
-    pos = "[first] " if first else ""
     auth = f" AUTHOR: {author}" if author else ""
-    prompt = (f"{pos}Decide if the candidate answer is correct.\n"
-              f"CANDIDATE: {candidate}\nGOLD: {gold}{auth}\n"
+    if first:
+        answers = f"ANSWER 1 (CANDIDATE): {candidate}\nANSWER 2 (REFERENCE): {gold}"
+        position = 1
+    else:
+        answers = f"ANSWER 1 (REFERENCE): {gold}\nANSWER 2 (CANDIDATE): {candidate}"
+        position = 2
+    prompt = ("Decide if the candidate answer is correct.\n"
+              f"{answers}\nCANDIDATE POSITION: {position}{auth}\n"
               f"Reply 1 if correct else 0.")
     out = judge.complete(prompt, temperature=0.0)
     return 1 if "1" in out[:3] else 0

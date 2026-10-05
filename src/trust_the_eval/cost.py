@@ -6,6 +6,7 @@ cost and are replayable.
 """
 from __future__ import annotations
 import hashlib
+import json
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -49,12 +50,16 @@ class CachingClient(ModelClient):
         self._cache: dict[str, str] = {}
 
     @staticmethod
-    def _key(prompt: str, temperature: float, n: int, idx: int) -> str:
-        h = hashlib.sha256(f"{temperature}|{n}|{idx}|{prompt}".encode("utf-8"))
+    def _key(prompt: str, temperature: float, n: int, idx: int,
+             kw: dict[str, Any] | None = None) -> str:
+        # Provider parameters (seed, response format, max tokens, etc.) are part
+        # of the request identity. repr is the safe fallback for non-JSON values.
+        params = json.dumps(kw or {}, sort_keys=True, default=repr, separators=(",", ":"))
+        h = hashlib.sha256(f"{temperature}|{n}|{idx}|{params}|{prompt}".encode("utf-8"))
         return h.hexdigest()
 
     def complete(self, prompt: str, *, temperature: float = 0.0, **kw: Any) -> str:
-        key = self._key(prompt, temperature, 1, 0)
+        key = self._key(prompt, temperature, 1, 0, kw)
         if key in self._cache:
             self.meter.cache_hits += 1
             return self._cache[key]
@@ -63,10 +68,19 @@ class CachingClient(ModelClient):
         self._cache[key] = out
         return out
 
+    def complete_uncached(self, prompt: str, *, temperature: float = 0.0,
+                          **kw: Any) -> str:
+        """Reach the wrapped provider and meter the call without cache I/O."""
+        uncached = getattr(self.base, "complete_uncached", self.base.complete)
+        out = uncached(prompt, temperature=temperature, **kw)
+        self.meter.record(prompt, out)
+        return out
+
     def sample(self, prompt: str, n: int, *, temperature: float = 1.0, **kw: Any) -> list[str]:
         outs: list[str] = []
         for i in range(n):
-            key = self._key(prompt, temperature, n, i)
+            call_kw = dict(kw, _variant=i)
+            key = self._key(prompt, temperature, n, i, call_kw)
             if key in self._cache:
                 self.meter.cache_hits += 1
                 outs.append(self._cache[key])

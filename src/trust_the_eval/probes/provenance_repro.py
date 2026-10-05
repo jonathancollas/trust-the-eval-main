@@ -30,8 +30,10 @@ class ProvenanceRepro(Probe):
         n = stable = 0
         for _, it in items:
             n += 1
-            a = normalize(model.complete(it.question, temperature=0.0))
-            b = normalize(model.complete(it.question, temperature=0.0))
+            # A replay is an experiment: both observations must reach the
+            # provider even when the battery wrapped it in CachingClient.
+            a = normalize(model.complete_uncached(it.question, temperature=0.0))
+            b = normalize(model.complete_uncached(it.question, temperature=0.0))
             if a == b:
                 stable += 1
         determinism = (stable / n) if n else 1.0
