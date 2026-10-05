@@ -1370,8 +1370,10 @@ const CLAIM_MEAN = {
   sup:"Not undermined by the validity threats we test.",
   fra:"Usable with caveats — address the threats below before relying on it.",
   uns:"The score can't support this claim as a clean measurement until these are fixed.",
+  na:"No relevant probe produced a measurement.",
+  inc:"Too few relevant probes ran to support or undermine this claim.",
 };
-const CLAIM_WORD = {sup:"supportable", fra:"fragile", uns:"not supportable"};
+const CLAIM_WORD = {sup:"supportable", fra:"fragile", uns:"not supportable", na:"not assessed", inc:"inconclusive"};
 function claimVerdict(claim, findings){
   const ids = new Set(CLAIM_TYPES[claim]||[]);
   const rel = findings.filter(f=>ids.has(f.probe_id));
@@ -1381,10 +1383,13 @@ function claimVerdict(claim, findings){
   const hasHighReliable = threats.some(f=>f.severity==='high' && isReliable(f.probe_id));
   const hasHigh = threats.some(f=>f.severity==='high');
   const hasMed = threats.some(f=>f.severity==='medium');
+  const coverage = ids.size ? new Set(rel.map(f=>f.probe_id)).size / ids.size : 0;
   let v = 'sup';
-  if(hasHighReliable) v='uns';
+  if(!rel.length) v='na';
+  else if(hasHighReliable) v='uns';
   else if(hasHigh || hasMed) v='fra';
-  return {v, threats, nProbes:rel.length};
+  else if(coverage < .5) v='inc';
+  return {v, threats, nProbes:rel.length, coverage};
 }
 function paintClaimVerdicts(){
   const el = $('#claimverdicts'); if(!el) return;
@@ -1392,10 +1397,10 @@ function paintClaimVerdicts(){
   const cards = Object.keys(CLAIM_TYPES).map(claim=>{
     const {v, threats, nProbes} = claimVerdict(claim, findings);
     const active = state.claimFilter===claim ? ' active':'';
-    const na = nProbes===0;                       // no relevant probe ran: nothing to support or undermine
-    const dv = na ? 'na' : v;
-    const word = na ? 'not assessed' : CLAIM_WORD[v];
-    const mean = na ? 'No probes target this claim for the data you loaded — there is nothing here to support or undermine.' : CLAIM_MEAN[v];
+    const na = v==='na';
+    const dv = v;
+    const word = CLAIM_WORD[v];
+    const mean = CLAIM_MEAN[v];
     let body;
     if(na){
       body = `<div class="cv-none" style="color:var(--muted)">— no relevant probes —</div>`;

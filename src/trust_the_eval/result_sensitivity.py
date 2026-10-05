@@ -36,7 +36,7 @@ def kendall_inversions(order_a: Sequence[str], order_b: Sequence[str]) -> int:
 
 def spearman(xs: Sequence[float], ys: Sequence[float]) -> Optional[float]:
     n = len(xs)
-    if n < 2:
+    if n != len(ys) or n < 2:
         return None
 
     def _rank(v: Sequence[float]) -> List[float]:
@@ -53,15 +53,61 @@ def spearman(xs: Sequence[float], ys: Sequence[float]) -> Optional[float]:
             i = j + 1
         return r
 
+    # Spearman with ties is Pearson's correlation of average ranks.  The
+    # shortcut 1-6*sum(d^2)/(n(n^2-1)) is valid only without ties.
     rx, ry = _rank(xs), _rank(ys)
-    d2 = sum((rx[i] - ry[i]) ** 2 for i in range(n))
-    denom = n * (n * n - 1)
-    return 1.0 - 6.0 * d2 / denom if denom else None
+    mx, my = sum(rx) / n, sum(ry) / n
+    dx, dy = [x - mx for x in rx], [y - my for y in ry]
+    vx, vy = sum(x * x for x in dx), sum(y * y for y in dy)
+    if vx == 0 or vy == 0:
+        return None
+    return sum(x * y for x, y in zip(dx, dy)) / (vx * vy) ** 0.5
 
 
 def _ranking(scores: Dict[str, float]) -> List[str]:
-    # deterministic: accuracy desc, then model name asc for ties
+    # Names make display deterministic only; inferential statistics below use
+    # scores/tie groups and therefore never depend on model names.
     return sorted(scores, key=lambda m: (-scores[m], m))
+
+
+def _average_ranks(scores: Dict[str, float]) -> Dict[str, float]:
+    order = _ranking(scores)
+    ranks: Dict[str, float] = {}
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and scores[order[j + 1]] == scores[order[i]]:
+            j += 1
+        avg = (i + j + 2) / 2.0  # positions are 1-indexed
+        for k in range(i, j + 1):
+            ranks[order[k]] = avg
+        i = j + 1
+    return ranks
+
+
+def _tau_b(scores_a: Dict[str, float], scores_b: Dict[str, float]) -> Optional[float]:
+    models = list(scores_a)
+    concordant = discordant = non_tie_a = non_tie_b = 0
+    for i in range(len(models)):
+        for j in range(i + 1, len(models)):
+            a = (scores_a[models[i]] > scores_a[models[j]]) - (scores_a[models[i]] < scores_a[models[j]])
+            b = (scores_b[models[i]] > scores_b[models[j]]) - (scores_b[models[i]] < scores_b[models[j]])
+            non_tie_a += a != 0
+            non_tie_b += b != 0
+            if a and b:
+                concordant += a == b
+                discordant += a != b
+    # Kendall tau-b: ties contribute to the denominator through the number of
+    # pairs ordered in each ranking, without being arbitrarily broken by names.
+    denom = (non_tie_a * non_tie_b) ** 0.5
+    return (concordant - discordant) / denom if denom else None
+
+
+def _top_set(scores: Dict[str, float]) -> set[str]:
+    if not scores:
+        return set()
+    best = max(scores.values())
+    return {m for m, score in scores.items() if score == best}
 
 
 CONDITIONAL_LAW_STATUS = (
@@ -78,6 +124,8 @@ CONDITIONAL_LAW_STATUS = (
 def ranking_stable(result: Dict[str, object]) -> bool:
     """Does the POINT-estimate ranking hold under correction (no inversions)?
     Bootstrap top-1 fragility is reported separately (p_top1_change)."""
+    if result.get("top_models_orig") != result.get("top_models_corr"):
+        return False
     tau = result.get("kendall_tau")
     return True if tau is None else tau >= 0.99
 
@@ -195,9 +243,10 @@ def sensitivity(predictions: Dict[str, Dict[str, Optional[str]]],
                 ao[m] = so / nI
                 ac[m] = sc / nI
                 deltas[m].append((sc - so) / nI)
-            bo, bc = _ranking(ao), _ranking(ac)
-            taus.append(1 - 2 * kendall_inversions(bo, bc) / C)
-            if bo[0] != bc[0]:
+            tau = _tau_b(ao, ac)
+            if tau is not None:
+                taus.append(tau)
+            if _top_set(ao) != _top_set(ac):
                 top1_changes += 1
 
     def _ci(v: List[float]) -> Tuple[Optional[float], Optional[float]]:
@@ -207,8 +256,8 @@ def sensitivity(predictions: Dict[str, Dict[str, Optional[str]]],
         return (s[int(0.025 * len(s))], s[int(0.975 * len(s))])
 
     per_model = {}
-    rank_o = {m: i + 1 for i, m in enumerate(ord_o)}
-    rank_c = {m: i + 1 for i, m in enumerate(ord_c)}
+    rank_o = _average_ranks(acc_o)
+    rank_c = _average_ranks(acc_c)
     for m in models:
         lo, hi = _ci(deltas[m])
         per_model[m] = {
@@ -217,7 +266,9 @@ def sensitivity(predictions: Dict[str, Dict[str, Optional[str]]],
             "rank_orig": rank_o[m], "rank_corr": rank_c[m],
         }
 
-    inv = kendall_inversions(ord_o, ord_c) if C else 0
+    inv = sum(1 for i, a in enumerate(models) for b in models[i + 1:]
+              if (acc_o[a] - acc_o[b]) * (acc_c[a] - acc_c[b]) < 0)
+    tau = _tau_b(acc_o, acc_c)
     tau_ci = _ci(taus)
 
     # skill-discrimination on changed items: do stronger models pick the
@@ -244,10 +295,12 @@ def sensitivity(predictions: Dict[str, Dict[str, Optional[str]]],
         "n_models": n, "n_items_scored": nI, "n_changed_items": len(changed),
         "per_model": per_model,
         "ranking_orig": ord_o, "ranking_corr": ord_c,
-        "kendall_tau": (1 - 2 * inv / C) if C else None,
+        "kendall_tau": tau,
         "inversions": inv, "n_pairs": C,
         "tau_lo": tau_ci[0], "tau_hi": tau_ci[1],
-        "p_top1_change": (top1_changes / iters) if (taus) else None,
+        "p_top1_change": (top1_changes / iters) if (nI and C and iters) else None,
+        "top_models_orig": sorted(_top_set(acc_o)),
+        "top_models_corr": sorted(_top_set(acc_c)),
         "models_moved": [m for m in models if rank_o[m] != rank_c[m]],
         "skill_discrimination": skill_disc,
         "mechanism": mech,

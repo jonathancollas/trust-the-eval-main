@@ -3,7 +3,7 @@ from typing import Optional
 
 from ..artifact import EvalArtifact
 from ..finding import Finding, Severity
-from ..grading import default_grader
+from ..grading import robust_grader
 from ..perturb import reformat_templates
 from ..probe import ModelClient, Probe, register
 from ..sampling import subsample
@@ -17,6 +17,9 @@ class PromptFormatSensitivity(Probe):
     name = "Prompt-format sensitivity"
     paper_priority = "P5"
     requires_model = True
+
+    def estimate_model_calls(self, artifact: EvalArtifact) -> int:
+        return min(artifact.n, self.sample_size) * len(reformat_templates(""))
 
     def __init__(self, sample_size: int = 40, seed: int = 0):
         self.sample_size, self.seed = sample_size, seed
@@ -33,7 +36,7 @@ class PromptFormatSensitivity(Probe):
             correct = 0
             for _, it in items:
                 prompt = dict(reformat_templates(it.question))[name]
-                if default_grader(model.complete(prompt, temperature=0.0), it.answer):
+                if robust_grader(model.complete(prompt, temperature=0.0), it.answer):
                     correct += 1
             per_template[name] = correct / len(items)
         spread = max(per_template.values()) - min(per_template.values())
@@ -171,7 +174,7 @@ PromptFormatSensitivity.DOC = ProbeDoc(
         "items; calls are metered and cached by the CachingClient."
     ),
     code_refs=["trust_the_eval.perturb.reformat_templates",
-               "trust_the_eval.grading.default_grader"],
+               "trust_the_eval.grading.robust_grader"],
 )
 
 PromptFormatSensitivity.TUNABLES = {'high': {'default': 0.2, 'min': 0, 'max': 1, 'step': 0.01, 'help': 'accuracy spread >= this -> HIGH'}, 'medium': {'default': 0.1, 'min': 0, 'max': 1, 'step': 0.01, 'help': '>= this -> MEDIUM'}, 'sample_size': {'default': 40, 'min': 1, 'max': 1000, 'step': 1, 'help': 'items sampled', 'ctor': True}, 'seed': {'default': 0, 'min': 0, 'max': 99999, 'step': 1, 'help': 'seed', 'ctor': True}}

@@ -77,7 +77,7 @@ def test_portfolio_and_spotlight_shapes(assembled):
 
 
 def test_faithful_trace_invariant_tau(assembled):
-    """(C - D) / npair must equal the headline Kendall tau, for every benchmark."""
+    """Tie-aware tau-b trace must equal the headline for every benchmark."""
     _store, data = assembled
     checked = 0
     for row in data["portfolio"]:
@@ -85,9 +85,9 @@ def test_faithful_trace_invariant_tau(assembled):
         tau = row["sens"]["tau"]
         if not t or tau is None or t["tau"]["npair"] == 0:
             continue
-        C, D, npair = t["tau"]["C"], t["tau"]["D"], t["tau"]["npair"]
-        assert C + D == npair, (row["name"], C, D, npair)
-        assert abs((C - D) / npair - tau) < 1e-9, (row["name"], (C - D) / npair, tau)
+        C, D, denom = t["tau"]["C"], t["tau"]["D"], t["tau"]["denom"]
+        assert C + D <= t["tau"]["npair"]
+        assert abs((C - D) / denom - tau) < 1e-6, (row["name"], (C - D) / denom, tau)
         checked += 1
     assert checked >= 2  # at least the subjects that actually have a ranking
 

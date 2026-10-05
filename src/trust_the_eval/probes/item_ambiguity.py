@@ -19,6 +19,10 @@ class ItemAmbiguity(Probe):
     paper_priority = "P5"
     requires_model = True
 
+    def estimate_model_calls(self, artifact: EvalArtifact) -> int:
+        panel_size = 1 + len(artifact.metadata.get("panel") or [])
+        return min(artifact.n, self.sample_size) * self.votes * panel_size
+
     def __init__(self, sample_size: int = 30, votes: int = 5, seed: int = 0):
         self.sample_size, self.votes, self.seed = sample_size, votes, seed
 

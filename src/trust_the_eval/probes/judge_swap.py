@@ -15,9 +15,13 @@ class JudgeSwap(Probe):
     preference/collusion via a cross-family judge (pass one as `model`); (c)
     Cohen's kappa vs human labels in meta['human_label']."""
     id = "judge_swap"
-    name = "Judge validity (position bias, collusion, kappa)"
+    name = "Judge stability (position, cross-judge, human agreement)"
     paper_priority = "Axis II"
     requires_model = True
+
+    def estimate_model_calls(self, artifact: EvalArtifact) -> int:
+        calls_per_item = 2 + int(self.cross is not None)
+        return min(artifact.n, self.sample_size) * calls_per_item
 
     def __init__(self, sample_size: int = 50, cross_family_judge: Optional[ModelClient] = None,
                  seed: int = 0):
@@ -33,7 +37,7 @@ class JudgeSwap(Probe):
             return [Finding(self.id, Severity.INFO,
                             "no (response, gold) pairs to judge")]
         n = swaps = cross_disagree = 0
-        own_labels, cross_labels, human_labels = [], [], []
+        own_labels, cross_labels, human_pairs = [], [], []
         for _, it in items:
             n += 1
             s_first = judge_correct(model, it.response, it.answer, first=True, author="fam-A")
@@ -49,7 +53,7 @@ class JudgeSwap(Probe):
                     cross_disagree += 1
             hl = it.meta.get("human_label")
             if hl is not None:
-                human_labels.append(int(hl))
+                human_pairs.append((own, int(hl)))
         pos_bias = swaps / n
         attrs = {"gen_ai.eval.trust.judge.position_bias": round(pos_bias, 3)}
         bits = [f"position bias {pos_bias:.2f} ({swaps}/{n} verdicts flip on order swap)"]
@@ -60,8 +64,9 @@ class JudgeSwap(Probe):
             bits.append(f"cross-family disagreement {collusion:.2f}")
             if collusion >= self.tune("collusion_high"):
                 sev = Severity.HIGH
-        if human_labels and len(human_labels) == len(own_labels[:len(human_labels)]):
-            k = cohens_kappa(own_labels[:len(human_labels)], human_labels)
+        if human_pairs:
+            judge_human, human_labels = zip(*human_pairs)
+            k = cohens_kappa(judge_human, human_labels)
             attrs["gen_ai.eval.trust.judge.kappa"] = round(k, 3)
             bits.append(f"kappa vs humans {k:.2f}")
             if k < self.tune("kappa_high"):
@@ -69,7 +74,8 @@ class JudgeSwap(Probe):
         return [Finding(self.id, sev, "; ".join(bits), score=round(pos_bias, 3),
                         otel_attributes=attrs,
                         evidence={"judged": n, "order_flips": swaps,
-                                  "cross_family_disagree": cross_disagree})]
+                                  "cross_family_disagree": cross_disagree,
+                                  "human_pairs": len(human_pairs)})]
 
 
 # ---------------------------------------------------------------------------

@@ -4,7 +4,7 @@ from typing import Optional
 from ..artifact import EvalArtifact
 from ..finding import Finding, Severity
 from ..probe import ModelClient, Probe, register
-from ..stats import min_significant_gap, proportion_halfwidth, wilson_ci
+from ..stats import proportion_halfwidth, wilson_ci
 
 
 @register
@@ -29,9 +29,12 @@ class StatisticalPower(Probe):
                             evidence={"n": n, "n_scored": 0, "scoring_coverage": 0.0})]
         k = sum(1 for sc in scored if sc >= self.tune("correct_cutoff"))
         p = k / n_scored
-        half = proportion_halfwidth(p, n_scored)
-        gap = min_significant_gap(p, n_scored)
         lo, hi = wilson_ci(k, n_scored)
+        wald_half = proportion_halfwidth(p, n_scored)
+        # Use the interval we actually display.  Wald collapses to zero at
+        # p=0/1, which made a perfect result on one item look perfectly precise.
+        half = (hi - lo) / 2
+        gap = min(1.0, (2.0 ** 0.5) * half)
         coverage = n_scored / n
         sev = Severity.MEDIUM if gap > self.tune("gap_medium") else Severity.LOW
         note = ""
@@ -56,7 +59,8 @@ class StatisticalPower(Probe):
                         evidence={"n": n, "n_scored": n_scored,
                                   "scoring_coverage": round(coverage, 4),
                                   "k": k, "accuracy": round(p, 4), "z": 1.96,
-                                  "wald_halfwidth": round(half, 4),
+                                  "wald_halfwidth": round(wald_half, 4),
+                                  "wilson_halfwidth": round(half, 4),
                                   "min_sig_gap": round(gap, 4),
                                   "wilson_lo": round(lo, 3), "wilson_hi": round(hi, 3)})]
 
@@ -86,12 +90,10 @@ StatisticalPower.DOC = ProbeDoc(
         "& DasGupta (2001) recommend the Wilson score interval (Wilson, 1927) "
         "instead, which stays in range and is accurate at the extremes. This probe "
         "reports the Wilson 95% interval for the score, plus two readouts: the "
-        "Wald half-width as a familiar '\u00b1 points' precision figure, and the "
-        "minimum significant gap \u2014 the smallest accuracy difference between "
-        "two equal-n models that would not be explained by noise, derived from the "
-        "standard error of a difference of proportions (\u221a2 times the "
-        "single-proportion SE). Two models closer than that gap are a tie at this "
-        "n.\n\n"
+        "Wilson half-width as a familiar '\u00b1 points' precision figure. The "
+        "comparison-resolution heuristic is \u221a2 times that Wilson half-width "
+        "(capped at one), so uncertainty does not collapse to zero for a tiny "
+        "perfect or zero-score sample.\n\n"
         "Scope and honesty: this is a static, model-free probe \u2014 it reads the "
         "recorded per-item scores and n, and assesses whether the NUMBER is precise "
         "enough to support the claims made about it (its precision and whether "
@@ -133,15 +135,14 @@ StatisticalPower.DOC = ProbeDoc(
             latex=r"\mathrm{CI}_{95}=\frac{\hat p+\frac{z^2}{2n}\ \pm\ z\sqrt{\frac{\hat p(1-\hat p)}{n}+\frac{z^2}{4n^2}}}{1+\frac{z^2}{n}},\qquad z=1.96",
         ),
         MathBlock(
-            label="Minimum significant gap (two equal-n models)",
+            label="Conservative comparison resolution (two equal-n models)",
             html=(
-                '<span class="mrow">&Delta;<sub>min</sub> = '
-                'z&nbsp;<span class="sqrt"><span class="rad">&radic;</span><span class="rnd">2</span></span>&nbsp;'
-                '<span class="sqrt"><span class="rad">&radic;</span><span class="rnd">p&#770;(1\u2212p&#770;)/n</span></span>'
-                ' &nbsp;&nbsp;(Wald half-width: half = z<span class="sqrt"><span class="rad">&radic;</span><span class="rnd">p&#770;(1\u2212p&#770;)/n</span></span>)</span>'
+                '<span class="mrow">&Delta;<sub>resolution</sub> = min(1, '
+                '<span class="sqrt"><span class="rad">&radic;</span><span class="rnd">2</span></span>'
+                '&middot;(Wilson<sub>hi</sub> &minus; Wilson<sub>lo</sub>)/2)</span>'
             ),
-            latex=r"\Delta_{\min}=z\sqrt{2}\,\sqrt{\frac{\hat p(1-\hat p)}{n}},\qquad "
-                  r"\text{half}=z\sqrt{\frac{\hat p(1-\hat p)}{n}}",
+            latex=r"\Delta_{\mathrm{resolution}}=\min\left(1,\sqrt{2}\,"
+                  r"\frac{\mathrm{Wilson}_{hi}-\mathrm{Wilson}_{lo}}{2}\right)",
         ),
     ],
     terms=[
@@ -151,7 +152,7 @@ StatisticalPower.DOC = ProbeDoc(
         ("k", "number of items scored correct (score \u2265 0.5)"),
         ("z", "normal quantile for the confidence level; z = 1.96 for 95%"),
         ("CI\u2089\u2085", "Wilson score 95% interval for the true accuracy (reported as [lo, hi])"),
-        ("half", "Wald half-width z\u221a(p\u0302(1\u2212p\u0302)/n), reported as a familiar \u00b1 points precision figure"),
+        ("half", "Wilson interval half-width, reported as a familiar \u00b1 points precision figure"),
         ("\u0394_min", "minimum significant gap: smallest A\u2212B accuracy difference at this n not attributable to noise (the probe's score)"),
     ],
     thresholds=[
@@ -172,7 +173,8 @@ StatisticalPower.DOC = ProbeDoc(
         ("accuracy", "derived", "k / n_scored"),
         ("z", "parameter", "normal quantile fixed at 1.96 for 95% confidence"),
         ("wald_halfwidth", "derived", "z\u00b7\u221a(p\u0302(1\u2212p\u0302)/n_scored) \u2014 stats.proportion_halfwidth"),
-        ("min_sig_gap", "derived", "z\u00b7\u221a2\u00b7\u221a(p\u0302(1\u2212p\u0302)/n_scored) \u2014 stats.min_significant_gap (the score)"),
+        ("wilson_halfwidth", "derived", "(wilson_hi \u2212 wilson_lo)/2; displayed precision"),
+        ("min_sig_gap", "derived", "min(1, \u221a2\u00b7wilson_halfwidth), conservative comparison resolution (the score)"),
         ("wilson_lo", "derived", "lower Wilson 95% bound on n_scored \u2014 stats.wilson_ci"),
         ("wilson_hi", "derived", "upper Wilson 95% bound on n_scored \u2014 stats.wilson_ci"),
     ],
@@ -210,7 +212,6 @@ StatisticalPower.DOC = ProbeDoc(
         "the wrong number."
     ),
     code_refs=["trust_the_eval.stats.wilson_ci",
-               "trust_the_eval.stats.min_significant_gap",
                "trust_the_eval.stats.proportion_halfwidth"],
 )
 

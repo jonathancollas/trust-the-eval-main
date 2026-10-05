@@ -2,7 +2,7 @@
 
 ## Unit + integration suite
 ```bash
-python -m pytest -q          # 188 tests, ~12s, zero network
+python -m pytest -q          # 333 tests, ~40s, zero network
 ```
 Covers the probes, calibration (planted-defect recall/specificity), the record
 store and content-addressing, the autonomy pipeline (sync/observe, validation,

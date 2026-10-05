@@ -15,6 +15,8 @@ from trust_the_eval.probes.model_drift import ModelDrift
 from trust_the_eval.probes.judge_swap import JudgeSwap
 from trust_the_eval.probes.answer_extraction_audit import AnswerExtractionAudit
 from trust_the_eval.probes.reward_hacking_eval import RewardHackingEval
+from trust_the_eval.probes.provenance_repro import ProvenanceRepro
+from trust_the_eval.runner import run_battery
 
 
 def _arith(n=24):
@@ -84,6 +86,39 @@ def test_judge_position_bias_detected():
     fair = JudgeModel(position_bias=0.0)
     f2 = JudgeSwap(seed=1).run(art, fair)[0]
     assert f2.otel_attributes["gen_ai.eval.trust.judge.position_bias"] == 0.0
+
+
+def test_judge_swap_physically_reorders_answers_and_aligns_human_labels():
+    class RecordingJudge(JudgeModel):
+        def __init__(self):
+            super().__init__()
+            self.prompts = []
+        def complete(self, prompt, **kw):
+            self.prompts.append(prompt)
+            return super().complete(prompt, **kw)
+    judge = RecordingJudge()
+    art = EvalArtifact(dataset="j", items=[
+        EvalItem(question="q0", answer="4", response="5", meta={}),
+        EvalItem(question="q1", answer="4", response="4", meta={"human_label": 1}),
+    ])
+    f = JudgeSwap().run(art, judge)[0]
+    assert "ANSWER 1 (CANDIDATE)" in judge.prompts[0]
+    assert "ANSWER 1 (REFERENCE)" in judge.prompts[1]
+    assert "[first]" not in "".join(judge.prompts)
+    assert f.evidence["human_pairs"] == 1
+
+
+def test_provenance_repro_bypasses_battery_cache():
+    class Alternating:
+        def __init__(self): self.calls = 0
+        def complete(self, prompt, **kw):
+            self.calls += 1
+            return "A" if self.calls % 2 else "B"
+    model = Alternating()
+    art = EvalArtifact(dataset="r", items=[EvalItem(question="q", answer="A")])
+    rep = run_battery(art, model=model, probe_ids=["provenance_repro"])
+    assert rep.findings[0].score == 0.0
+    assert model.calls == 2 and rep.cost["cache_hits"] == 0
 
 def test_extraction_audit_static_detects_misscoring():
     items = [

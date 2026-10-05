@@ -21,6 +21,7 @@ def _mcq(it) -> Optional[list[str]]:
 class OptionOrderBias(Probe):
     """For MCQ items, permute option order; if the chosen CONTENT changes, the
     score reflects position/label artifacts, not capability."""
+    model_calls_per_item = 2
     id = "option_order_bias"
     name = "MCQ option-order bias"
     paper_priority = "P5"
@@ -28,6 +29,10 @@ class OptionOrderBias(Probe):
 
     def __init__(self, sample_size: int = 40, seed: int = 0):
         self.sample_size, self.seed = sample_size, seed
+
+    def estimate_model_calls(self, artifact: EvalArtifact) -> int:
+        return 2 * sum(_mcq(item) is not None for _, item in
+                       subsample(artifact.items, self.sample_size, self.seed))
 
     def _ask(self, model, question, options):
         n = len(options)

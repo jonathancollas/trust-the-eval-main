@@ -18,6 +18,9 @@ class SelfConsistency(Probe):
     paper_priority = "Principle 2"
     requires_model = True
 
+    def estimate_model_calls(self, artifact: EvalArtifact) -> int:
+        return min(artifact.n, self.sample_size) * self.votes
+
     def __init__(self, sample_size: int = 30, votes: int = 5, seed: int = 0):
         self.sample_size, self.votes, self.seed = sample_size, votes, seed
 

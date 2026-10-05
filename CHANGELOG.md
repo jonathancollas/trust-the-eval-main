@@ -1,10 +1,40 @@
 # Changelog
 
+## Unreleased
+
+- Add a per-probe preflight provider-call estimate, an `--estimate-only` CLI
+  mode, and expose the estimate in console, JSON, and Trust Reports.
+- Apply UI/run overrides marked as constructor tunables when probes are
+  instantiated, so sample sizes and vote counts now affect both execution and
+  cost planning.
+
 ## [Unreleased] — Validity observatory: result sensitivity
 
 A criterion-validity study on real data (HELM v1.3.0 × MMLU-Redux, 10 models /
 57 subjects) reshaped how we judge an evaluation result. See
-`docs/validity-model.md` and `criterion-validity-study.md`.
+`docs/validity-model.md`.
+
+### Fixed after adversarial audit
+- Reproducibility repetitions now bypass the shared model cache; behavioral
+  probes use strict final-answer grading rather than substring acceptance.
+- Judge order checks physically swap candidate/reference content and align human
+  labels item-by-item; paired framing uses an exact McNemar test.
+- Spearman handles ties and constants correctly, ranking sensitivity represents
+  tied top sets without model-name-dependent inference, and binomial precision
+  uses the displayed Wilson interval at extreme/small samples.
+- Empty or poorly covered claim audits are `not assessed` / `inconclusive`, not
+  `supportable`; promptfoo is detected by schema and Inspect `scores` are retained.
+
+### Added after the audit roadmap
+- Reports now carry a versioned artifact manifest and exact probe coverage
+  (`requested`, `completed`, `skipped`, errors and stop reason). Generic JSON,
+  promptfoo and Inspect items retain their complete source record for mapping
+  audits; the canonical v1.0 contract is documented in `docs/artifact-schema.md`.
+- Model runs accept a hard `--max-model-calls` budget. The wrapper rejects the
+  call before it would exceed the limit, records the denial and stops the battery
+  with an explicit incomplete-coverage reason.
+- Calibration output is labelled **embedded-scenario conformity — not field
+  performance** and places its 38 positive / 43 negative case counts up front.
 
 ### Changed
 - `observe` now renders the **rich navigable observatory** (`observatory_ui`) as the
@@ -20,8 +50,8 @@ A criterion-validity study on real data (HELM v1.3.0 × MMLU-Redux, 10 models /
   vs rank-fragile, never a trust score), a per-benchmark dossier with the
   verdict-under-correction ribbon, and a **Probe library** that explains *and*
   demonstrates the science behind each probe. Two invariants are tested: every figure
-  carries the computation that produced it — each trace satisfies
-  `(C − D) / npair == kendall_tau` exactly — and no model is rated or ranked as an
+  carries the computation that produced it — each trace reconstructs tie-aware
+  Kendall τ-b from concordant, discordant and tied pairs — and no model is rated or ranked as an
   endpoint. Pure `assemble_ui_data` + `build_ui_html`; real-data driver in
   `scripts/build_observatory_ui.py`. Covered by `tests/test_observatory_ui.py`.
 - `result_sensitivity` — the headline measure: per-model Δscore (bootstrap CIs),
