@@ -36,8 +36,8 @@ conditions réelles**.
 | Dimension | Appréciation | Motif principal |
 |---|---|---|
 | Utilité fonctionnelle | **Bonne pour l'exploration** | CLI, UI locale, imports, exports, observatoire et remédiations sont présents |
-| Ingénierie / testabilité | **Bonne** | 319 tests passent hors réseau ; architecture modulaire et sans dépendance obligatoire |
-| Ergonomie documentaire | **Moyenne** | documentation scientifique riche dans le code, mais README obsolète et deux produits imbriqués |
+| Ingénierie / testabilité | **Bonne** | 328 tests passent hors réseau ; architecture modulaire et sans dépendance obligatoire |
+| Ergonomie documentaire | **Moyenne à bonne** | README et workflow de test corrigés ; les surfaces Trust the Eval et Meridian restent imbriquées |
 | Validité statistique | **Prometteuse mais partielle** | intervalles, bootstrap et sensibilité ; plusieurs hypothèses simplificatrices persistent |
 | Validité externe des probes | **Faible à moyenne** | 11/20 probes au niveau « synthetic floor » ; un seul corpus humain principal |
 | État de l'art | **Bon cadrage, couverture incomplète** | traite contamination, juges, prompts, puissance et provenance ; pas d'IRT/DIF ni de validation d'usage |
@@ -47,6 +47,31 @@ conditions réelles**.
 et générateur de dossiers de preuve ; ne pas utiliser ses sévérités comme
 seuils d'acceptation contractuels avant validation externe multi-domaines.
 
+### Réponse courte : tout est-il pris en compte ?
+
+**Non, pas au sens de “tout est résolu”.** Les défauts d'implémentation
+reproductibles et les incohérences documentaires identifiés pendant l'audit ont
+été corrigés. Les limites qui demandent de nouvelles données, une validation
+indépendante ou une extension de produit restent ouvertes.
+
+| Sujet de l'audit | État au 5 octobre 2026 |
+|---|---|
+| Cache de reproductibilité, correcteur permissif, vrai swap du juge, appariement humain | **Corrigé et couvert par régression** |
+| Spearman avec ex æquo, classements liés, Wilson aux extrêmes, McNemar apparié | **Corrigé et couvert par régression** |
+| Verdict sans preuve, détection promptfoo, champ Inspect `scores` | **Corrigé pour les cas reproduits** |
+| README, statut des probes, commande pytest depuis un checkout | **Corrigé** |
+| Schéma canonique sans perte pour toutes versions Inspect/promptfoo | **Partiel / ouvert** |
+| Budget dur, estimation avant run, retries, concurrence bornée | **Ouvert** |
+| Cluster bootstrap et cible benchmark fixe vs population d'items | **Ouvert** |
+| Seuils décisionnels contextualisés et fonction de perte | **Ouvert** |
+| IRT/Rasch, DIF, invariance et psychométrie avancée | **Ouvert** |
+| Validation externe multi-domaines des 11 probes comportementales | **Ouvert — limite principale** |
+| Études utilisateurs, agents/outils/multimodal et réplication indépendante | **Ouvert** |
+
+Les mentions « corrigé » signifient que le contre-exemple connu ne se reproduit
+plus et qu'un test empêche sa régression. Elles ne constituent pas une
+validation scientifique externe de la probe concernée.
+
 ## 2. Périmètre et méthode
 
 L'audit a couvert :
@@ -55,7 +80,7 @@ L'audit a couvert :
 2. le recensement effectif des probes via le CLI ;
 3. une exécution statique sur `examples/sample_eval_result.json` ;
 4. la calibration synthétique embarquée ;
-5. les 319 tests unitaires et d'intégration hors réseau ;
+5. les 328 tests unitaires et d'intégration hors réseau ;
 6. les adaptateurs JSON, Inspect et promptfoo, le runner, les statistiques, le
    modèle de validité, le stockage et les surfaces UI/observatoire ;
 7. une comparaison aux publications et recommandations primaires listées en
@@ -112,7 +137,7 @@ Hugging Face de l'UI et le mapping explicite des colonnes réduisent la friction
 
 ### 3.4 Le socle de tests est substantiel
 
-La suite complète passe avec `PYTHONPATH=src` : **319 tests en 39,22 s**. Elle
+La suite complète passe directement avec `python -m pytest -q` : **328 tests**. Elle
 couvre les probes, la calibration, le stockage, les vues, l'ingestion, les
 exports, les pipelines et une petite tranche de vraies données MMLU-Redux/HELM.
 Le harnais manuel plus large annonce des invariants sur 117 sources ; c'est une
@@ -123,36 +148,28 @@ n'a pas été rejoué pendant cet audit.
 
 ### 4.1 Problèmes fonctionnels et produit
 
-#### Documentation principale incohérente — priorité haute
+#### Documentation principale — corrigée après audit
 
-Le README décrit encore six probes, en annonce deux « done » et quatre « stub »,
-puis qualifie le projet de scaffold pré-alpha. Le code en enregistre vingt,
-toutes implémentées, et les tests en couvrent beaucoup plus que les « 188 »
-annoncés. Cette divergence nuit directement à l'auditabilité : un utilisateur
-ne sait pas si le README, le CLI ou l'UI constitue la référence.
+Le README initial décrivait encore quatre probes comme des stubs et le projet
+comme un scaffold pré-alpha. Il indique désormais que les 20 probes sont
+implémentées, distingue explicitement le plancher synthétique des preuves
+externes et qualifie correctement le produit de prototype de recherche. Le
+nombre de tests documenté a également été synchronisé avec la suite courante.
 
-**Action :** générer automatiquement la table des probes et le nombre de tests,
-ou supprimer les nombres volatils ; publier une carte claire des deux surfaces
-Trust the Eval (audit d'un run) et Meridian (observatoire de corpus).
+#### Installation développeur — corrigé après audit
 
-#### Installation développeur peu robuste — priorité moyenne
+Dans le checkout initial, `python -m pytest -q` échouait dès la collecte avec 46
+erreurs `ModuleNotFoundError`. Le dépôt déclare désormais `pythonpath = ["src"]`
+dans sa configuration pytest : la commande documentée fonctionne dans un
+checkout frais, sans installation éditable préalable.
 
-Dans un checkout non installé, `python -m pytest -q` échoue dès la collecte avec
-46 erreurs `ModuleNotFoundError`; la même commande réussit après installation ou
-avec `PYTHONPATH=src`. Ce n'est pas un défaut du paquet installé, mais la
-documentation de test présente la commande comme directement exécutable.
+#### Interopérabilité encore partielle — priorité moyenne
 
-**Action :** ajouter une configuration pytest `pythonpath = ["src"]`, ou rendre
-l'étape `pip install -e ".[dev]"` explicite dans `TESTING.md` et la CI locale.
-
-#### Interopérabilité plus étroite que le discours — priorité moyenne
-
-Les adaptateurs sont tolérants mais volontairement « best effort ». Ils
-aplatissent certains chats, prennent une cible unique, convertissent quelques
-codes de score et peuvent perdre rubriques, traces d'outils, plusieurs graders,
-tokens/logprobs ou métadonnées de version. Un nom de fichier contenant
-`promptfoo` déclenche l'adaptateur correspondant : la détection par nom plutôt
-que par schéma est fragile.
+La détection promptfoo se fait désormais par schéma et l'adaptateur Inspect
+préserve le champ pluriel `scores`. Les adaptateurs restent néanmoins « best
+effort » : ils aplatissent certains chats, choisissent une valeur canonique
+parmi plusieurs graders et ne garantissent pas encore la conservation de toutes
+les traces d'outils, rubriques, tokens/logprobs et métadonnées de version.
 
 **Action :** versionner un schéma canonique, valider les entrées avec des erreurs
 actionnables, détecter le format par contenu, conserver les objets sources sans
@@ -202,18 +219,16 @@ préférences humaines multi-annotateurs, (2) prompt/ordre/format sur plusieurs
 familles de modèles et tâches, (3) contamination et drift avec connaissance des
 snapshots d'entraînement ou canaris contrôlés.
 
-#### Certains tests n'exploitent pas le plan expérimental
+#### Plan expérimental — appariement corrigé, dépendances encore ouvertes
 
-`sandbagging_paired` applique un test de deux proportions indépendantes aux
-mêmes items posés sous deux cadres. La documentation reconnaît que McNemar exact
-serait le test apparié approprié. Le runner ne conserve cependant pas les quatre
-cellules discordantes nécessaires. De même, les intervalles Wilson et plusieurs
-bootstraps supposent implicitement des items indépendants ; les benchmarks
-contiennent souvent des grappes par sujet, source ou template.
+`sandbagging_paired` conserve désormais les discordances et applique McNemar
+exact. En revanche, les intervalles Wilson et plusieurs bootstraps supposent
+encore implicitement des items indépendants ; les benchmarks contiennent souvent
+des grappes par sujet, source ou template.
 
-**Action :** passer à McNemar exact, conserver les réponses appariées, proposer
-des intervalles cluster-bootstrap/hiérarchiques et documenter explicitement la
-population cible : benchmark fixe ou généralisation à une population d'items.
+**Action restante :** proposer des intervalles cluster-bootstrap/hiérarchiques
+et documenter explicitement la population cible : benchmark fixe ou
+généralisation à une population d'items.
 
 #### Les seuils de sévérité sont utiles mais non validés décisionnellement
 
@@ -320,39 +335,41 @@ comme produit de certification ou observatoire public faisant autorité.
 
 ### P0 — rendre les affirmations exactes (0–1 mois)
 
-1. Synchroniser README, statut des 20 probes, commandes d'installation et
-   nombre de tests.
-2. Renommer le KPI de calibration par défaut en « conformité aux scénarios
+1. **Fait :** synchroniser README, statut des 20 probes, commandes
+   d'installation et nombre de tests.
+2. **Ouvert :** renommer le KPI de calibration par défaut en « conformité aux scénarios
    embarqués » et afficher `38 positifs / 43 négatifs` au premier plan.
-3. Ajouter à chaque rapport un bandeau : population auditée, probes exécutées,
+3. **Partiel :** les probes ignorées et la couverture sont exposées ; ajouter
+   encore à chaque rapport un bandeau unifié : population auditée, probes exécutées,
    probes ignorées, nombre d'appels, données manquantes et limites d'inférence.
-4. Corriger le test apparié de sandbagging et ajouter les intervalles appariés.
+4. **Fait pour le test :** McNemar exact et discordances appariées ; les
+   intervalles appariés dédiés restent à ajouter.
 
 ### P1 — solidifier le produit (1–3 mois)
 
-1. Schéma canonique versionné et validation stricte des imports.
-2. Estimation de coût, budget dur, replay et manifeste fournisseur complet.
-3. Cluster bootstrap par sujet/source/template et distinction explicite
+1. **Ouvert :** schéma canonique versionné et validation stricte des imports.
+2. **Ouvert :** estimation de coût, budget dur, replay et manifeste fournisseur complet.
+3. **Ouvert :** cluster bootstrap par sujet/source/template et distinction explicite
    benchmark accuracy / generalized accuracy.
-4. Séparation nette des interfaces « audit d'un run » et « observatoire »,
+4. **Ouvert :** séparation nette des interfaces « audit d'un run » et « observatoire »,
    avec parcours et documentation propres.
 
 ### P2 — acquérir de la validité externe (3–9 mois)
 
-1. Protocole préenregistré, seuils gelés et corpus caché.
-2. Annotations indépendantes multiples avec accord et arbitrage.
-3. Validation sur réponses ouvertes, code, multilingue et plusieurs familles de
+1. **Ouvert :** protocole préenregistré, seuils gelés et corpus caché.
+2. **Ouvert :** annotations indépendantes multiples avec accord et arbitrage.
+3. **Ouvert :** validation sur réponses ouvertes, code, multilingue et plusieurs familles de
    modèles, en publiant tous les échecs et intervalles.
-4. Benchmark externe des probes `judge_swap`, `prompt_format_sensitivity`,
+4. **Ouvert :** benchmark externe des probes `judge_swap`, `prompt_format_sensitivity`,
    `option_order_bias`, `contamination_perturb` et `model_drift` en priorité.
 
 ### P3 — passer de l'audit technique à la science de la mesure (6–12 mois)
 
-1. Fiche obligatoire de construct et argument de validité par usage.
-2. Modules IRT/Rasch, information, DIF et invariance, sous conditions de taille.
-3. Tests utilisateurs et impact sur les décisions.
-4. Support natif des trajectoires agentiques, outils et résultats multimodaux.
-5. Réplication externe ou challenge communautaire en aveugle.
+1. **Ouvert :** fiche obligatoire de construct et argument de validité par usage.
+2. **Ouvert :** modules IRT/Rasch, information, DIF et invariance, sous conditions de taille.
+3. **Ouvert :** tests utilisateurs et impact sur les décisions.
+4. **Ouvert :** support natif des trajectoires agentiques, outils et résultats multimodaux.
+5. **Ouvert :** réplication externe ou challenge communautaire en aveugle.
 
 ## 7. Critères de sortie du statut « prototype de recherche »
 

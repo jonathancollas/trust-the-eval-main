@@ -77,6 +77,14 @@ class CachingClient(ModelClient):
         self.meter.record(prompt, out)
         return out
 
+    def complete_uncached(self, prompt: str, *, temperature: float = 0.0,
+                          **kw: Any) -> str:
+        """Reach the wrapped provider and meter the call without cache I/O."""
+        uncached = getattr(self.base, "complete_uncached", self.base.complete)
+        out = uncached(prompt, temperature=temperature, **kw)
+        self.meter.record(prompt, out)
+        return out
+
     def sample(self, prompt: str, n: int, *, temperature: float = 1.0, **kw: Any) -> list[str]:
         outs: list[str] = []
         for i in range(n):

@@ -58,12 +58,16 @@ static-on-real-responses probes.
 |---|---|---|---|---|
 | `statistical_power` | precision of the score; are rankings real or noise | Principle 2 | no | **done** |
 | `dataset_hygiene` | duplicates, malformed items, leaked canary | P5 | no | **done** |
-| `contamination_perturb` | memorization (verbatim pass, perturbed fail) | P5 | yes | stub |
-| `judge_swap` | judge position bias, collusion, kappa vs humans | Axis II | yes | stub |
-| `sandbagging_paired` | suppression under eval-salient framing | P4 | yes | stub |
-| `elicitation_ceiling` | under-reported capability; can't vs won't | P2 | yes | stub |
+| `contamination_perturb` | reformulation sensitivity (contamination signal) | P5 | yes | **done, synthetic floor** |
+| `judge_swap` | position, cross-judge and human agreement | Axis II | yes | **done, synthetic floor** |
+| `sandbagging_paired` | sensitivity to eval-salient framing | P4 | yes | **done, synthetic floor** |
+| `elicitation_ceiling` | under-reported capability; can't vs won't | P2 | yes | **done, synthetic floor** |
 
-**Honest note:** the two `done` probes are static and cheap - and, as the experiment that started this project showed, **low signal** on a clean benchmark. The value is in the four model-in-the-loop stubs. They are stubs *on purpose*: this project is **depth-first** (a shallow probe that gives false confidence is worse than none), and these are the contribution targets.
+**Honest note:** this short table is only the original six-probe overview. The
+runtime registry contains 20 implemented probes (`trust-the-eval list-probes`).
+Eleven behavioural probes have only a **synthetic validation floor**: their
+controllable fixtures prove internal wiring, not real-world precision. Treat
+their findings as investigation signals, never causal diagnoses.
 
 ## Result sensitivity & the validity profile
 
@@ -118,11 +122,14 @@ P4 sandbagging -> `sandbagging_paired` - P5 contamination & benchmark validity -
 
 ## Status
 
-Pre-alpha scaffold. The framework runs; the high-value probes are intentionally unimplemented (depth-first + community). See `CONTRIBUTING.md` to add one.
+Research prototype. The framework and all 20 registered probes run, but most
+behavioural probes still need independent, multi-domain validation. It is fit
+for exploratory audit and human review, not automatic certification. See
+`CONTRIBUTING.md` to add or validate a probe.
 
 ## Testing
 
-`python -m pytest -q` runs 188 tests with no network. Beyond the synthetic unit
+`python -m pytest -q` runs 328 tests with no network. Beyond the synthetic unit
 and calibration tests, a committed **real-data** end-to-end test pins real
 MMLU-Redux numbers, and a manual harness (`scripts/e2e_real_data.py`) drives the
 full pipeline over 117 real sources with **24,000+ counted invariant checks**.
