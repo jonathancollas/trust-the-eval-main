@@ -30,6 +30,8 @@ def test_trust_report_is_self_contained_and_honest(tmp_path):
     # provenance: the artifact's own content hash, with honest stamp wording
     assert art.content_hash() in html
     assert "provenance stamp, not a cryptographic signature" in html
+    assert "input schema" in html and "generic_json" in html
+    assert "probe coverage" in html and "8/20 completed" in html
     # four per-claim verdict cards, humble framing, remediation present
     assert html.count('class="vb"') == 4
     assert "not undermined by the threats we test" in html

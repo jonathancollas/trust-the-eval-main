@@ -2,7 +2,8 @@ from __future__ import annotations
 import json
 import zipfile
 
-from ..artifact import EvalArtifact, EvalItem
+from ..artifact import (CANONICAL_SCHEMA_VERSION, SOURCE_RECORD_KEY,
+                        EvalArtifact, EvalItem)
 
 
 def _final_text(obj) -> str:
@@ -60,7 +61,14 @@ def load(path: str) -> EvalArtifact:
         target = s.get("target")
         if isinstance(target, list):
             target = target[0] if target else ""
-        score_obj = s.get("score") or {}
+        score_obj = s.get("score")
+        if score_obj is None:
+            scores = s.get("scores") or {}
+            # Current Inspect logs store one entry per scorer. Preserve all
+            # entries in metadata, while selecting the first scalar value for
+            # the canonical single-score artifact.
+            score_obj = next(iter(scores.values()), None) if isinstance(scores, dict) else None
+        score_obj = score_obj or {}
         if isinstance(score_obj, dict):
             val = score_obj.get("value")
         else:
@@ -73,9 +81,13 @@ def load(path: str) -> EvalArtifact:
         items.append(EvalItem(
             question=str(q or ""), answer=str(target or ""),
             response=_final_text(s.get("output")), score=score,
-            meta={k: s[k] for k in ("metadata", "id") if k in s},
+            meta={**{k: s[k] for k in ("metadata", "id", "scores") if k in s},
+                  SOURCE_RECORD_KEY: s},
         ))
     task = header.get("eval", {}).get("task") if header else None
     model = header.get("eval", {}).get("model") if header else None
     return EvalArtifact(dataset=task or "inspect_eval", items=items,
-                        model=model, source_path=path, metadata=header)
+                        model=model, source_path=path,
+                        metadata={**header,
+                                  "schema_version": CANONICAL_SCHEMA_VERSION,
+                                  "source_format": "inspect_eval"})

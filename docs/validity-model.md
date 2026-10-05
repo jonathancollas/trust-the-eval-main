@@ -8,14 +8,15 @@ the earlier per-benchmark "trust score".
 A benchmark can carry label errors, ambiguous items, and weak internal
 reliability. Does any of that actually change the **conclusions** people draw —
 the model **scores** and **rankings**? We tested it on real data instead of
-asserting it.
+asserting it. The methods and limitations are summarized below; no separate
+unpublished study document is required to interpret these results.
 
 ## The criterion study (real data)
 HELM v1.3.0 per-item predictions for **10 models** × **57 MMLU subjects**
 (5 692 matched items, 99.9% join) joined to MMLU-Redux annotations. We rank the
 models on the same scorable set under the **original** gold and under the
 **corrected** gold, and ask whether the per-subject label-error rate predicts
-where the ranking moves. (See `criterion-validity-study.md` for full numbers.)
+where the ranking moves.
 
 Findings:
 - **The global MMLU ranking is robust to label correction** — Kendall τ = 1.000

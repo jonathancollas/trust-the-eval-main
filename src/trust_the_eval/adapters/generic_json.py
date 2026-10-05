@@ -2,7 +2,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from ..artifact import EvalArtifact, EvalItem
+from ..artifact import (CANONICAL_SCHEMA_VERSION, SOURCE_RECORD_KEY,
+                        EvalArtifact, EvalItem)
 
 
 def load(path: str) -> EvalArtifact:
@@ -27,7 +28,8 @@ def load(path: str) -> EvalArtifact:
             answer=it.get("answer", ""),
             response=it.get("response"),
             score=it.get("score"),
-            meta={k: v for k, v in it.items() if k not in keep},
+            meta={**{k: v for k, v in it.items() if k not in keep},
+                  SOURCE_RECORD_KEY: it},
         )
         for it in data.get("items", [])
     ]
@@ -36,6 +38,8 @@ def load(path: str) -> EvalArtifact:
         items=items,
         model=data.get("model"),
         judge=data.get("judge"),
-        metadata=data.get("metadata", {}),
+        metadata={**data.get("metadata", {}),
+                  "schema_version": CANONICAL_SCHEMA_VERSION,
+                  "source_format": "generic_json"},
         source_path=path,
     )

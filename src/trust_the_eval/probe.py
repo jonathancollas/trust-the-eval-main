@@ -22,6 +22,16 @@ class ModelClient(abc.ABC):
         return [self.complete(prompt, temperature=temperature, _variant=i, **kw)
                 for i in range(n)]
 
+    def complete_uncached(self, prompt: str, *, temperature: float = 0.0,
+                          **kw: Any) -> str:
+        """Perform a genuine observation, bypassing wrapper caches if supported.
+
+        Plain clients have no cache to bypass, so the default delegates to
+        :meth:`complete`. Wrappers override this method without leaking
+        cache-control keywords into third-party provider implementations.
+        """
+        return self.complete(prompt, temperature=temperature, **kw)
+
 
 class Probe(abc.ABC):
     id: str = "probe"

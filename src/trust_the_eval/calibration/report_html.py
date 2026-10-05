@@ -251,11 +251,12 @@ def render_report_html(report: CalibrationReport,
 <body>
 <header class="hero"><div class="wrap">
   <h1>Trust the Eval — Probe Calibration Report</h1>
-  <p>Measured precision &amp; recall of each validity probe against known ground truth.</p>
+  <p>Conformity to embedded calibration scenarios — not real-world field performance.</p>
+  <p>{p['positive_cases']} positive cases · {p['negative_cases']} negative cases.</p>
   <p>generated {_e(report.generated_at)} · seed {report.seed} · {len(report.probes)} probes</p>
   <div class="kpis">
     <div class="kpi"><div class="v">{_pct(p['precision'])}</div>
-      <div class="l">pooled precision</div><div class="ci">{_ci(p['precision'])}</div></div>
+      <div class="l">embedded-case precision</div><div class="ci">{_ci(p['precision'])}</div></div>
     <div class="kpi"><div class="v">{_pct(p['recall'])}</div>
       <div class="l">pooled recall</div><div class="ci">{_ci(p['recall'])}</div></div>
     <div class="kpi"><div class="v">{_pct(p['specificity'])}</div>

@@ -4,6 +4,9 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+CANONICAL_SCHEMA_VERSION = "1.0"
+SOURCE_RECORD_KEY = "_source_record"
+
 
 @dataclass
 class EvalItem:
@@ -43,3 +46,18 @@ class EvalArtifact:
             ensure_ascii=False, sort_keys=True,
         ).encode("utf-8")
         return "sha256:" + hashlib.sha256(blob).hexdigest()
+
+    def manifest(self) -> dict[str, Any]:
+        """Minimal machine-readable provenance for reports and exports."""
+        return {
+            "schema_version": self.metadata.get("schema_version", CANONICAL_SCHEMA_VERSION),
+            "source_format": self.metadata.get("source_format", "canonical"),
+            "source_path": self.source_path,
+            "dataset": self.dataset,
+            "model": self.model,
+            "judge": self.judge,
+            "n_items": self.n,
+            "n_scored": sum(it.score is not None for it in self.items),
+            "n_responses": sum(it.response is not None for it in self.items),
+            "content_hash": self.content_hash(),
+        }

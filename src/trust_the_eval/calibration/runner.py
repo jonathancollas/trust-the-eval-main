@@ -76,6 +76,9 @@ def _pooled(cals: list[ProbeCalibration]) -> dict:
         "macro_average_precision": sum(aps) / len(aps) if aps else None,
         "probes_total": len(cals),
         "probes_perfect": n_perfect,
+        "positive_cases": tp + fn,
+        "negative_cases": tn + fp,
+        "interpretation": "conformity to embedded calibration scenarios; not field performance",
     }
 
 
@@ -148,6 +151,8 @@ def summary_table(report: CalibrationReport) -> str:
     def pf(d):
         v = d.get("value")
         return f"{v:.3f}" if isinstance(v, (int, float)) else "  -  "
+    lines.append("EMBEDDED-SCENARIO CONFORMITY (not field performance)")
+    lines.append(f"cases: {p['positive_cases']} positive / {p['negative_cases']} negative")
     lines.append(f"POOLED  precision={pf(p['precision'])}  recall={pf(p['recall'])}  "
                  f"specificity={pf(p['specificity'])}  "
                  f"(TP={p['tp']} FP={p['fp']} FN={p['fn']} TN={p['tn']})")

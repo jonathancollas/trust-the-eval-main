@@ -4,7 +4,7 @@ from typing import Optional
 from ..artifact import EvalArtifact
 from ..evidence import trim
 from ..finding import Finding, Severity
-from ..grading import default_grader, extract_final
+from ..grading import robust_grader, extract_final
 from ..probe import ModelClient, Probe, register
 from ..sampling import subsample
 
@@ -48,14 +48,14 @@ class LabelErrorAudit(Probe):
                 majs = [m for m, _ in verdicts]
                 consensus = max(set(majs), key=majs.count)
                 agree = majs.count(consensus) / len(majs)
-                if agree >= self.tune("agree") and not default_grader(f"answer: {consensus}", it.answer):
+                if agree >= self.tune("agree") and not robust_grader(f"answer: {consensus}", it.answer):
                     n_suspect += 1
                     rows.append({"item": idx, "question": trim(it.question),
                                  "gold": trim(it.answer), "model_consensus": consensus,
                                  "models_agreeing": f"{majs.count(consensus)}/{len(majs)}"})
             else:
                 maj, consistent = verdicts[0]
-                if consistent and not default_grader(f"answer: {maj}", it.answer):
+                if consistent and not robust_grader(f"answer: {maj}", it.answer):
                     n_suspect += 1
                     rows.append({"item": idx, "question": trim(it.question),
                                  "gold": trim(it.answer), "model_answer": maj})
@@ -212,7 +212,7 @@ LabelErrorAudit.DOC = ProbeDoc(
         "is the reliable mode; this probe now supports it via metadata['panel'], and single-model results are reported UNCONFIRMED (capped below HIGH). (c) Mislabel vs "
         "ambiguity: a flag does not distinguish a wrong label from a question with "
         "no single defensible answer \u2014 that separation is item_ambiguity's "
-        "job. (d) Grader-bound: 'disagrees' uses default_grader, so answer-format "
+        "job. (d) Grader-bound: 'disagrees' uses robust_grader, so answer-format "
         "mismatches the grader can't normalize may masquerade as disagreement "
         "(interacts with answer_extraction_audit); and the 0.8 consistency cut "
         "with few votes is coarse (with votes=3, 'consistent' effectively means "
@@ -221,7 +221,7 @@ LabelErrorAudit.DOC = ProbeDoc(
         "CachingClient)."
     ),
     code_refs=["trust_the_eval.grading.extract_final",
-               "trust_the_eval.grading.default_grader",
+               "trust_the_eval.grading.robust_grader",
                "trust_the_eval.sampling.subsample"],
 )
 

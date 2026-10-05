@@ -14,9 +14,24 @@ from .runner import run_battery
 def _load_artifact(path: str):
     if path.endswith(".eval"):
         return inspect_log.load(path)
-    if "promptfoo" in path:
+    # Detect JSON formats from their schema, never from the filename.  A normal
+    # promptfoo export is commonly called results.json.
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            head = json.load(fh)
+        results = head.get("results") if isinstance(head, dict) else None
+        if isinstance(results, dict) and isinstance(results.get("results"), list):
+            return promptfoo.load(path)
+        if isinstance(results, list):
+            return promptfoo.load(path)
+    except (OSError, ValueError):
+        pass
+    if "promptfoo" in path.lower():
         return promptfoo.load(path)
-    return generic_json.load(path)
+    artifact = generic_json.load(path)
+    if not artifact.items:
+        raise ValueError("input contains no items and does not match a supported eval schema")
+    return artifact
 
 
 def main(argv: Optional[list] = None) -> int:
@@ -33,6 +48,8 @@ def main(argv: Optional[list] = None) -> int:
     p.add_argument("--trust-report", default=None,
                    help="write a self-contained, provenance-stamped Run Trust Report (HTML)")
     p.add_argument("--json-out", default=None)
+    p.add_argument("--max-model-calls", type=int, default=None,
+                   help="hard provider-call budget; stop before exceeding it")
     p.add_argument("--port", type=int, default=8077, help="port for 'serve'")
     p.add_argument("--host", default="127.0.0.1", help="host for 'serve'")
     p.add_argument("--no-browser", action="store_true", help="don't auto-open the browser")
@@ -102,7 +119,8 @@ def main(argv: Optional[list] = None) -> int:
     artifact = _load_artifact(args.artifact)
     model = build_model(args.model)
     probe_ids = args.probes.split(",") if args.probes else None
-    rep = run_battery(artifact, model=model, probe_ids=probe_ids)
+    rep = run_battery(artifact, model=model, probe_ids=probe_ids,
+                      max_model_calls=args.max_model_calls)
 
     print(report_mod.to_console(rep))
     if args.otel_out:

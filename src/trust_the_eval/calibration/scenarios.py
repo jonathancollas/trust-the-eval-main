@@ -471,22 +471,23 @@ def _reward_hacking(seed: int) -> list[CalibrationCase]:
 @scenario("judge_swap")
 def _judge_swap(seed: int) -> list[CalibrationCase]:
     # Items with a candidate response for the judge to score.
-    def judged(n, s, leak=False):
+    def judged(n, s, wrong=False):
         rng = random.Random(s)
         out = []
         for _ in range(n):
             a, b = rng.randint(2, 20), rng.randint(2, 9)
             v = a + b
+            answer = v + 1 if wrong else v
             out.append(EvalItem(question=_q(a, "+", b), answer=str(v),
-                                response=f"The answer is {v}.", score=1.0,
-                                meta={"candidate": f"The answer is {v}."}))
+                                response=f"The answer is {answer}.", score=float(not wrong),
+                                meta={"candidate": f"The answer is {answer}."}))
         return out
-    art = _artifact(judged(14, seed), dataset="judge-suite")
+    art = _artifact(judged(14, seed, wrong=True), dataset="judge-suite")
     return [
         # DEFECT: a position-biased / self-preferring judge disagrees with a swapped judge
         CalibrationCase("biased-judge", art, True,
-                        JudgeModel(seed=seed, position_bias=0.85, self_preference=0.8),
-                        note="position bias + self-preference"),
+                        JudgeModel(seed=seed, position_bias=1.0, self_preference=0.0),
+                        note="position bias by construction"),
         # CLEAN: a fair judge is stable under swap
         CalibrationCase("fair-judge", art, False, JudgeModel(seed=seed, position_bias=0.0),
                         regime="fair_judge"),
