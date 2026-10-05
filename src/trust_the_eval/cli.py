@@ -14,9 +14,24 @@ from .runner import run_battery
 def _load_artifact(path: str):
     if path.endswith(".eval"):
         return inspect_log.load(path)
-    if "promptfoo" in path:
+    # Detect JSON formats from their schema, never from the filename.  A normal
+    # promptfoo export is commonly called results.json.
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            head = json.load(fh)
+        results = head.get("results") if isinstance(head, dict) else None
+        if isinstance(results, dict) and isinstance(results.get("results"), list):
+            return promptfoo.load(path)
+        if isinstance(results, list):
+            return promptfoo.load(path)
+    except (OSError, ValueError):
+        pass
+    if "promptfoo" in path.lower():
         return promptfoo.load(path)
-    return generic_json.load(path)
+    artifact = generic_json.load(path)
+    if not artifact.items:
+        raise ValueError("input contains no items and does not match a supported eval schema")
+    return artifact
 
 
 def main(argv: Optional[list] = None) -> int:

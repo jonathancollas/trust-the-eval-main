@@ -410,3 +410,32 @@ probes : c'est de faire échouer les probes existantes sur des données externes
 de mesurer où et pourquoi elles échouent, puis de relier leurs résultats à des
 décisions humaines réelles. C'est ce passage qui transformera un excellent
 prototype d'assurance qualité en instrument de mesure défendable.
+
+## 10. Addendum après revue contradictoire
+
+Une revue du commit `a608e61` a fourni des contre-exemples exécutables. Ils ont
+été reproduits et ont conduit aux corrections suivantes :
+
+- les répétitions de `provenance_repro` contournent désormais explicitement le
+  cache et atteignent deux fois le fournisseur ;
+- les probes de comportement utilisent le correcteur strict de réponse finale ;
+  le correcteur permissif reste uniquement un objet d'audit/démonstration ;
+- `judge_swap` permute réellement candidat et référence, et le κ humain est
+  calculé sur les mêmes items annotés ;
+- une absence de findings produit `not assessed`, et une couverture inférieure
+  à la moitié des probes pertinentes produit `inconclusive`, jamais
+  `supportable` ;
+- Spearman est la corrélation de Pearson des rangs moyens et renvoie `None` sur
+  un vecteur constant ; les égalités de classement sont représentées comme des
+  ensembles et ne dépendent plus du nom du modèle ;
+- la précision affichée utilise la largeur de Wilson, qui reste honnête pour un
+  unique succès, et le test de cadrage apparié utilise McNemar exact ;
+- la CLI détecte promptfoo par schéma, refuse les artefacts génériques vides et
+  l'adaptateur Inspect prend en charge le champ pluriel `scores` sans le perdre.
+
+Des tests de régression encodent chacun de ces contre-exemples. Ces corrections
+retirent des erreurs bloquantes d'implémentation ; elles ne transforment pas les
+signaux comportementaux en preuves causales. Les libellés ont donc aussi été
+resserrés en « sensibilité à la reformulation », « sensibilité au cadrage
+d'évaluation » et « stabilité du juge ». La recommandation générale de cet
+audit demeure : exploration et revue humaine, pas certification automatique.

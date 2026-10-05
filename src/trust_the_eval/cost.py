@@ -54,13 +54,17 @@ class CachingClient(ModelClient):
         return h.hexdigest()
 
     def complete(self, prompt: str, *, temperature: float = 0.0, **kw: Any) -> str:
+        # Experimental replications must be genuine calls. ``cache=False`` is
+        # consumed here rather than forwarded to provider clients.
+        use_cache = kw.pop("cache", True)
         key = self._key(prompt, temperature, 1, 0)
-        if key in self._cache:
+        if use_cache and key in self._cache:
             self.meter.cache_hits += 1
             return self._cache[key]
         out = self.base.complete(prompt, temperature=temperature, **kw)
         self.meter.record(prompt, out)
-        self._cache[key] = out
+        if use_cache:
+            self._cache[key] = out
         return out
 
     def sample(self, prompt: str, n: int, *, temperature: float = 1.0, **kw: Any) -> list[str]:

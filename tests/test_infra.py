@@ -23,9 +23,25 @@ def test_grader_lenient_vs_robust():
     assert robust_grader("the final value is 4", "4") is True   # final number is 4
     assert robust_grader("the answer is 7", "4") is False    # final number is 7, not 4
 
+def test_robust_grader_rejects_substring_counterexamples():
+    assert robust_grader("The answer is B", "A") is False
+    assert robust_grader("42", "2") is False
+    assert robust_grader("not Paris", "Paris") is False
+
 def test_caching_client_meters_and_caches():
     m = CostMeter()
     c = CachingClient(HonestModel(), m)
     c.complete("What is 2 + 2?")
     c.complete("What is 2 + 2?")  # served from cache
     assert m.calls == 1 and m.cache_hits == 1
+
+def test_caching_client_can_force_real_replications():
+    class Alternating:
+        def __init__(self): self.calls = 0
+        def complete(self, prompt, *, temperature=0.0, **kw):
+            self.calls += 1
+            return "A" if self.calls % 2 else "B"
+    base = Alternating()
+    c = CachingClient(base)
+    assert c.complete("q", cache=False) != c.complete("q", cache=False)
+    assert base.calls == 2 and c.meter.cache_hits == 0

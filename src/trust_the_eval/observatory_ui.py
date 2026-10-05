@@ -438,16 +438,21 @@ def assemble_ui_data(store, pred_rows, intrinsic_rows, spotlight_names, models,
             ac = sum(1 for it in items if preds[m].get(it) in cg[it]) / n
             pm.append({"m": _short(m), "ao": round(ao, 4), "ac": round(ac, 4),
                        "d": round(ac - ao, 4)})
+        by_model = {x["m"]: x for x in pm}
+        C = D = non_tie_o = non_tie_c = 0
+        short_ms = list(by_model)
+        for i, a in enumerate(short_ms):
+            for b in short_ms[i + 1:]:
+                oa = by_model[a]["ao"] - by_model[b]["ao"]
+                ca = by_model[a]["ac"] - by_model[b]["ac"]
+                non_tie_o += oa != 0
+                non_tie_c += ca != 0
+                if oa and ca:
+                    C += (oa > 0) == (ca > 0)
+                    D += (oa > 0) != (ca > 0)
+        denom = (non_tie_o * non_tie_c) ** 0.5
         npair = len(ms) * (len(ms) - 1) // 2
-        # C/D reconstructed from the headline tau (no ties in the ranking permutation,
-        # so C + D = npair and C - D = tau * npair) -> trace matches headline exactly.
-        if head_tau is not None and npair:
-            D = round((1 - head_tau) * npair / 2)
-            C = npair - D
-            tau = head_tau
-        else:
-            C = D = 0
-            tau = None
+        tau = ((C - D) / denom) if denom else None
         item_vars = [_var([1.0 if preds[m].get(it) in og[it] else 0.0 for m in ms]) for it in items]
         totals = [sum(1.0 if preds[m].get(it) in og[it] else 0.0 for it in items) for m in ms]
         sum_iv, tot_v, k = sum(item_vars), _var(totals), n
@@ -460,6 +465,8 @@ def assemble_ui_data(store, pred_rows, intrinsic_rows, spotlight_names, models,
             "n_items": n, "n_models": len(ms),
             "per_model": sorted(pm, key=lambda x: -x["ac"]),
             "tau": {"C": C, "D": D, "npair": npair,
+                    "non_tie_orig": non_tie_o, "non_tie_corr": non_tie_c,
+                    "denom": round(denom, 6),
                     "tau": round(tau, 4) if tau is not None else None},
             "cronbach": {"k": k, "sum_item_var": round(sum_iv, 4),
                          "total_var": round(tot_v, 4),
@@ -830,7 +837,7 @@ function computePanel(pid,name){
     return `<div class="comp">
       <div class="cstep"><span class="cl">Inputs</span>${t.n_models} models \u00d7 ${t.n_items} scored items; original key vs corrected key.</div>
       <table class="ctab"><thead><tr><th>model</th><th>acc orig</th><th>acc corr</th><th>\u0394 pts</th></tr></thead><tbody>${rows}</tbody></table>
-      <div class="cstep"><span class="cl">Kendall \u03c4</span>concordant pairs C=${T.C}, discordant D=${T.D}, total = n(n\u22121)/2 = ${T.npair}. &nbsp;\u03c4 = (C\u2212D)/total = (${T.C}\u2212${T.D})/${T.npair} = <b>${T.tau.toFixed(4)}</b>.</div>
+      <div class="cstep"><span class="cl">Kendall \u03c4-b</span>concordant C=${T.C}, discordant D=${T.D}, ordered pairs original/corrected = ${T.non_tie_orig}/${T.non_tie_corr}. &nbsp;\u03c4-b = (C\u2212D)/\u221a(n<sub>o</sub>n<sub>c</sub>) = <b>${T.tau.toFixed(4)}</b>.</div>
       <div class="cstep"><span class="cl">Top\u20111 flip</span>bootstrap over items \u21d2 P(#1 changes) = <b>${pst==null?'\u2014':(pst*100).toFixed(0)+'%'}</b>.</div></div>`;}
   if(pid==='test_reliability'){const c=t.cronbach,term=c.sum_item_var/c.total_var;
     return `<div class="comp">

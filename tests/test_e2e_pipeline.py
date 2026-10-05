@@ -129,10 +129,10 @@ def test_every_displayed_figure_equals_the_canonical_recompute(e2e):
         le = rc.get("label_error") or {}
         if le.get("k") is not None:
             assert tr["label"]["defects"] == le["k"], name
-        # (d) Kendall tau reconstructs from the displayed pair counts
+            # (d) tie-aware Kendall tau-b reconstructs from displayed counts
         t = tr["tau"]
         if t["tau"] is not None and t["npair"]:
-            assert round((t["C"] - t["D"]) / t["npair"], 4) == round(t["tau"], 4), name
+                assert round((t["C"] - t["D"]) / t["denom"], 4) == round(t["tau"], 4), name
         # (e) the trace headline equals the leaderboard headline (single source)
         disp = LB[name]
         if (disp.get("sensitivity") or {}).get("kendall_tau") is not None:

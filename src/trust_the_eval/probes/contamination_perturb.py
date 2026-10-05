@@ -4,7 +4,7 @@ from typing import Optional
 from ..artifact import EvalArtifact
 from ..evidence import trim
 from ..finding import Finding, Severity
-from ..grading import default_grader
+from ..grading import robust_grader
 from ..perturb import paraphrase
 from ..probe import ModelClient, Probe, register
 from ..sampling import subsample
@@ -15,7 +15,7 @@ class ContaminationPerturbation(Probe):
     """Detect MEMORIZATION: items the model passes verbatim but fails when the
     question is paraphrased (answer preserved) signal contamination, not skill."""
     id = "contamination_perturb"
-    name = "Contamination via perturbation re-test"
+    name = "Reformulation sensitivity (contamination signal)"
     paper_priority = "P5"
     requires_model = True
 
@@ -29,12 +29,12 @@ class ContaminationPerturbation(Probe):
             if not it.question.strip() or not it.answer.strip():
                 continue
             verbatim = model.complete(it.question, temperature=0.0)
-            if not default_grader(verbatim, it.answer):
+            if not robust_grader(verbatim, it.answer):
                 continue  # only items it gets right verbatim are candidates
             n_checked += 1
             para = paraphrase(it.question, seed=self.seed + idx)
             re_ans = model.complete(para, temperature=0.0)
-            if not default_grader(re_ans, it.answer):
+            if not robust_grader(re_ans, it.answer):
                 n_flipped += 1
                 rows.append({"item": idx, "question": trim(it.question),
                              "paraphrase": trim(para), "gold": trim(it.answer)})
@@ -192,7 +192,7 @@ ContaminationPerturbation.DOC = ProbeDoc(
         "the probe currently reports the point estimate."
     ),
     code_refs=["trust_the_eval.perturb.paraphrase",
-               "trust_the_eval.grading.default_grader"],
+               "trust_the_eval.grading.robust_grader"],
 )
 
 ContaminationPerturbation.TUNABLES = {'risk_high': {'default': 0.4, 'min': 0, 'max': 1, 'step': 0.01, 'help': 'flip risk >= this -> HIGH'}, 'risk_medium': {'default': 0.15, 'min': 0, 'max': 1, 'step': 0.01, 'help': 'flip risk >= this -> MEDIUM'}, 'sample_size': {'default': 40, 'min': 1, 'max': 1000, 'step': 1, 'help': 'items sampled', 'ctor': True}, 'seed': {'default': 0, 'min': 0, 'max': 99999, 'step': 1, 'help': 'sampling seed', 'ctor': True}}

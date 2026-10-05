@@ -203,8 +203,8 @@ class JudgeModel(LocalModel):
     """A judge that scores a candidate response's correctness, with optional
     position bias and self-preference. Used by judge_swap / option_order_bias.
 
-    Prompt convention (set by judges.py):
-      '... CANDIDATE: <resp> GOLD: <gold> ... Reply 1 if correct else 0.'
+    Prompt convention (set by judges.py) contains ANSWER 1/2 with explicit
+    CANDIDATE/REFERENCE roles. The contents really swap between calls.
     """
 
     def __init__(self, position_bias: float = 0.0, self_preference: float = 0.0,
@@ -215,17 +215,20 @@ class JudgeModel(LocalModel):
         self.family = family
 
     def complete(self, prompt: str, *, temperature: float = 0.0, _variant: int = 0, **kw: Any) -> str:
-        m = re.search(r"candidate:\s*(.*?)\s*gold:\s*(.*?)\s*(?:author:\s*(\S+))?\s*$",
-                      prompt, re.IGNORECASE | re.DOTALL)
-        if not m:
+        cand = re.search(r"ANSWER [12] \(CANDIDATE\):\s*(.*?)(?=\nANSWER [12] \(|\nCANDIDATE POSITION:)",
+                         prompt, re.IGNORECASE | re.DOTALL)
+        gold = re.search(r"ANSWER [12] \(REFERENCE\):\s*(.*?)(?=\nANSWER [12] \(|\nCANDIDATE POSITION:)",
+                         prompt, re.IGNORECASE | re.DOTALL)
+        if not cand or not gold:
             return "0"
-        cand, gold = m.group(1), m.group(2)
-        author = (m.group(3) or "").strip()
+        cand, gold = cand.group(1), gold.group(1)
+        am = re.search(r"AUTHOR:\s*(\S+)", prompt, re.IGNORECASE)
+        author = (am.group(1) if am else "").strip()
         correct = extract_final(cand) == extract_final(gold) and extract_final(gold) != ""
         score = 1 if correct else 0
         rng = random.Random(hash((prompt, _variant)) & 0xffffffff)
         # position bias: if candidate is presented FIRST (flag in prompt), nudge up
-        if "[first]" in prompt.lower() and rng.random() < self.position_bias:
+        if "candidate position: 1" in prompt.lower() and rng.random() < self.position_bias:
             score = 1
         # self-preference: prefer responses from its own family
         if author and author == self.family and rng.random() < self.self_preference:

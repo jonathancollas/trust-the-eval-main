@@ -39,6 +39,20 @@ def two_proportion_pvalue(k1: int, n1: int, k2: int, n2: int) -> float:
     return math.erfc(abs(z) / math.sqrt(2.0))  # two-sided
 
 
+def mcnemar_exact_pvalue(b: int, c: int) -> float:
+    """Two-sided exact McNemar p-value from discordant paired counts.
+
+    ``b`` and ``c`` are the two off-diagonal cells. Under the null, either
+    direction is Binomial(b+c, .5); concordant pairs carry no information.
+    """
+    n = b + c
+    if n == 0:
+        return 1.0
+    k = min(b, c)
+    tail = sum(math.comb(n, i) for i in range(k + 1)) / (2 ** n)
+    return min(1.0, 2 * tail)
+
+
 def cohens_kappa(a: Sequence, b: Sequence) -> float:
     if len(a) != len(b) or not a:
         return float("nan")
