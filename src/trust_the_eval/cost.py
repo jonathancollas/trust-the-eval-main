@@ -65,7 +65,8 @@ class CachingClient(ModelClient):
             return self._cache[key]
         out = self.base.complete(prompt, temperature=temperature, **kw)
         self.meter.record(prompt, out)
-        self._cache[key] = out
+        if use_cache:
+            self._cache[key] = out
         return out
 
     def complete_uncached(self, prompt: str, *, temperature: float = 0.0,
