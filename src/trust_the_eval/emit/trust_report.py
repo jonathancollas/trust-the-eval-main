@@ -150,10 +150,10 @@ def render_trust_report(report, artifact, model_spec: str = "none",
     errors = "".join(f'<div class="err"><code>{_esc(k)}</code>: {_esc(v)}</div>'
                      for k, v in (report.errors or {}).items())
     cost = report.cost or {}
+    coverage = report.coverage()
+    manifest = artifact.manifest()
     cost_line = (f'{cost.get("calls", 0)} model calls \u00b7 ~${cost.get("est_usd", 0)}'
                  if cost.get("calls") is not None else "static probes only")
-    n_probes_fired = len({f["probe_id"] for f in findings})
-
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <title>Run Trust Report \u2014 {_esc(artifact.dataset)}</title>
@@ -190,11 +190,13 @@ code{{font-family:ui-monospace,Menlo,monospace;font-size:12px}}
 <h2>What was audited</h2>
 <div class="prov">
   <div class="row"><span class="k">dataset</span><b>{_esc(artifact.dataset)}</b></div>
-  <div class="row"><span class="k">items</span>{artifact.n}</div>
+  <div class="row"><span class="k">items</span>{artifact.n} ({manifest['n_scored']} scored; {manifest['n_responses']} responses)</div>
+  <div class="row"><span class="k">input schema</span>v{_esc(manifest['schema_version'])} · {_esc(manifest['source_format'])}</div>
   <div class="row"><span class="k">artifact model</span>{_esc(artifact.model or "\u2014")}</div>
   <div class="row"><span class="k">live model (probes)</span><code>{_esc(model_spec)}</code></div>
-  <div class="row"><span class="k">probes executed</span>{n_probes_fired} findings-bearing \u00b7 {len(report.skipped or [])} skipped \u00b7 {len(report.errors or {})} errors</div>
+  <div class="row"><span class="k">probe coverage</span>{coverage['completed']}/{coverage['requested']} completed ({coverage['fraction']*100:.0f}%) · {coverage['skipped']} skipped · {coverage['errors']} errors</div>
   <div class="row"><span class="k">cost</span>{_esc(cost_line)}</div>
+  {f'<div class="row"><span class="k">stopped</span><b>{_esc(report.stopped_reason)}</b></div>' if report.stopped_reason else ''}
   <div class="row"><span class="k">integrity stamp</span><code>{_esc(chash)}</code></div>
   <div class="stamp"><b>How to verify:</b> recompute the SHA-256 content hash of the audited artifact
   (questions + gold answers) and compare with the stamp above \u2014 it proves this report refers to the same data.

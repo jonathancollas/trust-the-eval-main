@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Optional
 
 from .artifact import EvalArtifact
-from .cost import CachingClient, CostMeter
+from .cost import CallBudgetExceeded, CachingClient, CostMeter
 from .finding import Finding
 from .probe import ModelClient, Probe, all_probes, get_probe
 
@@ -21,6 +21,21 @@ class Report:
     skipped: list[str] = field(default_factory=list)
     errors: dict[str, str] = field(default_factory=dict)
     cost: dict = field(default_factory=dict)
+    requested: list[str] = field(default_factory=list)
+    completed: list[str] = field(default_factory=list)
+    stopped_reason: Optional[str] = None
+
+    def coverage(self) -> dict:
+        total = len(self.requested)
+        return {
+            "requested": total,
+            "completed": len(self.completed),
+            "skipped": len(self.skipped),
+            "errors": len(self.errors),
+            "fraction": (len(self.completed) / total) if total else 0.0,
+            "complete": bool(total) and len(self.completed) == total,
+            "stopped_reason": self.stopped_reason,
+        }
 
 
 def run_battery(artifact: EvalArtifact,
@@ -28,7 +43,8 @@ def run_battery(artifact: EvalArtifact,
                 probe_ids: Optional[list[str]] = None,
                 progress: Optional[ProgressCb] = None,
                 should_continue: Optional[Callable[[], bool]] = None,
-                overrides: Optional[dict] = None) -> Report:
+                overrides: Optional[dict] = None,
+                max_model_calls: Optional[int] = None) -> Report:
     """Run a BATTERY of validity probes (parallel & independent; order-free).
 
     Model-in-the-loop probes are SKIPPED when no model is provided. All model
@@ -41,12 +57,15 @@ def run_battery(artifact: EvalArtifact,
     classes: list[type[Probe]] = (
         all_probes() if probe_ids is None else [get_probe(p) for p in probe_ids]
     )
-    meter = CostMeter()
+    if max_model_calls is not None and max_model_calls < 0:
+        raise ValueError("max_model_calls must be >= 0")
+    meter = CostMeter(max_calls=max_model_calls)
     client = CachingClient(model, meter) if model is not None else None
-    report = Report(artifact=artifact)
+    report = Report(artifact=artifact, requested=[c.id for c in classes])
     total = len(classes)
     for i, cls in enumerate(classes, start=1):
         if should_continue is not None and not should_continue():
+            report.stopped_reason = "cancelled"
             break
         probe = cls()
         if overrides and probe.id in overrides:
@@ -61,9 +80,16 @@ def run_battery(artifact: EvalArtifact,
         try:
             fs = probe.run(artifact, client)
             report.findings.extend(fs)
+            report.completed.append(probe.id)
             if progress:
                 progress({"i": i, "total": total, "id": probe.id,
                           "status": "done", "findings": fs})
+        except CallBudgetExceeded as exc:
+            report.stopped_reason = str(exc)
+            if progress:
+                progress({"i": i, "total": total, "id": probe.id,
+                          "status": "error", "error": str(exc)})
+            break
         except Exception as exc:  # a failing probe must not sink the battery
             report.errors[probe.id] = f"{type(exc).__name__}: {exc}"
             if progress:

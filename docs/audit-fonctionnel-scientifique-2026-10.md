@@ -36,7 +36,7 @@ conditions réelles**.
 | Dimension | Appréciation | Motif principal |
 |---|---|---|
 | Utilité fonctionnelle | **Bonne pour l'exploration** | CLI, UI locale, imports, exports, observatoire et remédiations sont présents |
-| Ingénierie / testabilité | **Bonne** | 328 tests passent hors réseau ; architecture modulaire et sans dépendance obligatoire |
+| Ingénierie / testabilité | **Bonne** | 331 tests passent hors réseau ; architecture modulaire et sans dépendance obligatoire |
 | Ergonomie documentaire | **Moyenne à bonne** | README et workflow de test corrigés ; les surfaces Trust the Eval et Meridian restent imbriquées |
 | Validité statistique | **Prometteuse mais partielle** | intervalles, bootstrap et sensibilité ; plusieurs hypothèses simplificatrices persistent |
 | Validité externe des probes | **Faible à moyenne** | 11/20 probes au niveau « synthetic floor » ; un seul corpus humain principal |
@@ -60,8 +60,9 @@ indépendante ou une extension de produit restent ouvertes.
 | Spearman avec ex æquo, classements liés, Wilson aux extrêmes, McNemar apparié | **Corrigé et couvert par régression** |
 | Verdict sans preuve, détection promptfoo, champ Inspect `scores` | **Corrigé pour les cas reproduits** |
 | README, statut des probes, commande pytest depuis un checkout | **Corrigé** |
-| Schéma canonique sans perte pour toutes versions Inspect/promptfoo | **Partiel / ouvert** |
-| Budget dur, estimation avant run, retries, concurrence bornée | **Ouvert** |
+| Schéma canonique versionné et conservation des enregistrements sources | **Partiel : v1.0 ajouté ; matrice multi-version ouverte** |
+| Budget dur d'appels | **Corrigé : arrêt avant dépassement** |
+| Estimation avant run, retries, concurrence bornée | **Ouvert** |
 | Cluster bootstrap et cible benchmark fixe vs population d'items | **Ouvert** |
 | Seuils décisionnels contextualisés et fonction de perte | **Ouvert** |
 | IRT/Rasch, DIF, invariance et psychométrie avancée | **Ouvert** |
@@ -80,7 +81,7 @@ L'audit a couvert :
 2. le recensement effectif des probes via le CLI ;
 3. une exécution statique sur `examples/sample_eval_result.json` ;
 4. la calibration synthétique embarquée ;
-5. les 328 tests unitaires et d'intégration hors réseau ;
+5. les 331 tests unitaires et d'intégration hors réseau ;
 6. les adaptateurs JSON, Inspect et promptfoo, le runner, les statistiques, le
    modèle de validité, le stockage et les surfaces UI/observatoire ;
 7. une comparaison aux publications et recommandations primaires listées en
@@ -137,7 +138,7 @@ Hugging Face de l'UI et le mapping explicite des colonnes réduisent la friction
 
 ### 3.4 Le socle de tests est substantiel
 
-La suite complète passe directement avec `python -m pytest -q` : **328 tests**. Elle
+La suite complète passe directement avec `python -m pytest -q` : **331 tests**. Elle
 couvre les probes, la calibration, le stockage, les vues, l'ingestion, les
 exports, les pipelines et une petite tranche de vraies données MMLU-Redux/HELM.
 Le harnais manuel plus large annonce des invariants sur 117 sources ; c'est une
@@ -337,18 +338,19 @@ comme produit de certification ou observatoire public faisant autorité.
 
 1. **Fait :** synchroniser README, statut des 20 probes, commandes
    d'installation et nombre de tests.
-2. **Ouvert :** renommer le KPI de calibration par défaut en « conformité aux scénarios
-   embarqués » et afficher `38 positifs / 43 négatifs` au premier plan.
-3. **Partiel :** les probes ignorées et la couverture sont exposées ; ajouter
-   encore à chaque rapport un bandeau unifié : population auditée, probes exécutées,
-   probes ignorées, nombre d'appels, données manquantes et limites d'inférence.
+2. **Fait :** le KPI est présenté comme « conformité aux scénarios embarqués —
+   pas performance terrain » et affiche `38 positifs / 43 négatifs`.
+3. **Fait pour les rapports CLI/JSON/Trust Report :** manifeste d'entrée,
+   couverture, probes terminées/ignorées/en erreur, appels, arrêt et limites.
 4. **Fait pour le test :** McNemar exact et discordances appariées ; les
    intervalles appariés dédiés restent à ajouter.
 
 ### P1 — solidifier le produit (1–3 mois)
 
-1. **Ouvert :** schéma canonique versionné et validation stricte des imports.
-2. **Ouvert :** estimation de coût, budget dur, replay et manifeste fournisseur complet.
+1. **Partiel :** schéma canonique v1.0, format source et lignes brutes conservées ;
+   validation stricte multi-version et migrations restent ouvertes.
+2. **Partiel :** budget dur et replay non caché présents ; estimation préalable,
+   retries et manifeste fournisseur complet restent ouverts.
 3. **Ouvert :** cluster bootstrap par sujet/source/template et distinction explicite
    benchmark accuracy / generalized accuracy.
 4. **Ouvert :** séparation nette des interfaces « audit d'un run » et « observatoire »,
@@ -456,3 +458,26 @@ signaux comportementaux en preuves causales. Les libellés ont donc aussi été
 resserrés en « sensibilité à la reformulation », « sensibilité au cadrage
 d'évaluation » et « stabilité du juge ». La recommandation générale de cet
 audit demeure : exploration et revue humaine, pas certification automatique.
+
+## 11. Avancement P0/P1 du 5 octobre 2026
+
+Le lot suivant poursuit la feuille de route sans prétendre fermer les travaux de
+validation externe :
+
+- chaque rapport expose un manifeste d'entrée versionné (`schema_version`,
+  format et chemin source, volumes d'items/réponses/scores, empreinte), ainsi que
+  la couverture exacte des probes et la raison d'un arrêt anticipé ;
+- un budget dur `max_model_calls` est vérifié **avant** chaque appel fournisseur
+  non caché ; les cache hits ne consomment pas ce budget et un dépassement stoppe
+  proprement la batterie ;
+- les adaptateurs generic JSON, promptfoo et Inspect conservent chaque
+  enregistrement source brut sous `_source_record`, en plus de la représentation
+  canonique v1.0 ;
+- la calibration se présente explicitement comme une conformité aux scénarios
+  embarqués, avec le nombre de cas positifs/négatifs, et non comme une estimation
+  de performance terrain.
+
+Restent notamment ouverts : estimation de coût avant exécution, retries et
+limites de débit, matrice de compatibilité sur plusieurs versions réelles des
+formats, cluster bootstrap, formalisation du construct, psychométrie avancée et
+validation indépendante multi-domaines.

@@ -14,6 +14,9 @@ def to_console(report: Report) -> str:
         "Trust the Eval - evaluation validity report",
         f"dataset: {a.dataset} - {a.n} items - {a.content_hash()[:23]}...",
         f"model: {a.model or '-'} - judge: {a.judge or '-'}",
+        (f"coverage: {report.coverage()['completed']}/{report.coverage()['requested']} "
+         f"probes completed; {report.coverage()['skipped']} skipped; "
+         f"{report.coverage()['errors']} errors"),
         "",
     ]
     for f in sorted(report.findings, key=lambda f: _ORDER[f.severity]):
@@ -27,6 +30,8 @@ def to_console(report: Report) -> str:
         out.append("")
         out.append(f"  cost: {report.cost['calls']} model calls "
                    f"({report.cost['cache_hits']} cached), ~{report.cost['est_usd']} USD")
+    if report.stopped_reason:
+        out.append(f"  stopped: {report.stopped_reason}")
     return "\n".join(out)
 
 
@@ -35,6 +40,7 @@ def to_dict(report: Report) -> dict[str, Any]:
         "dataset": report.artifact.dataset,
         "n_items": report.artifact.n,
         "provenance_hash": report.artifact.content_hash(),
+        "artifact_manifest": report.artifact.manifest(),
         "findings": [
             {"probe": f.probe_id, "severity": f.severity.value, "summary": f.summary,
              "score": f.score, "evidence": f.evidence}
@@ -43,4 +49,7 @@ def to_dict(report: Report) -> dict[str, Any]:
         "skipped": report.skipped,
         "errors": report.errors,
         "cost": report.cost,
+        "coverage": report.coverage(),
+        "requested_probes": report.requested,
+        "completed_probes": report.completed,
     }

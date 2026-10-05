@@ -1,7 +1,9 @@
 from trust_the_eval.sampling import subsample
 from trust_the_eval.perturb import paraphrase, numeric_renumber, reformat_templates
 from trust_the_eval.grading import default_grader, robust_grader, extract_final
-from trust_the_eval.cost import CachingClient, CostMeter
+import pytest
+
+from trust_the_eval.cost import CallBudgetExceeded, CachingClient, CostMeter
 from trust_the_eval.model.local import HonestModel
 
 
@@ -56,3 +58,15 @@ def test_caching_client_keys_include_provider_parameters():
     assert c.complete("same", seed=1) == "1"
     assert c.complete("same", seed=2) == "2"
     assert meter.calls == 2 and meter.cache_hits == 0
+
+
+def test_hard_call_budget_fails_before_provider_call():
+    meter = CostMeter(max_calls=1)
+    c = CachingClient(HonestModel(), meter)
+    c.complete("What is 2 + 2?")
+    # A cache hit remains free, but a new request is rejected before execution.
+    c.complete("What is 2 + 2?")
+    with pytest.raises(CallBudgetExceeded, match="1/1"):
+        c.complete("What is 3 + 3?")
+    assert meter.calls == 1 and meter.cache_hits == 1
+    assert meter.as_dict()["budget_exhausted"] is True

@@ -96,17 +96,15 @@ labelled "ground truth".
 ```bash
 pip install -e ".[dev]"
 trust-the-eval check examples/sample_eval_result.json --otel-out trust.json
+# Optional hard stop before a provider run exceeds its call budget:
+trust-the-eval check result.json --model local:honest --max-model-calls 100
 python examples/run_demo.py
 pytest -q
 ```
 
-## Interface audit and traceability plan
-
-The recommended product direction for the local UI is documented in
-[`docs/interface-audit-plan.md`](docs/interface-audit-plan.md): a six-stage
-workflow rail (Source → Mapping → Artifact → Probe plan → Execution → Evidence),
-a transformation ledger, row-level lineage, probe trace drawers, and replayable
-audit bundles.
+Imported artifacts use the versioned canonical schema documented in
+[`docs/artifact-schema.md`](docs/artifact-schema.md); adapters retain each raw
+source record for mapping audits.
 
 ## Design principles
 
@@ -129,7 +127,7 @@ for exploratory audit and human review, not automatic certification. See
 
 ## Testing
 
-`python -m pytest -q` runs 328 tests with no network. Beyond the synthetic unit
+`python -m pytest -q` runs 331 tests with no network. Beyond the synthetic unit
 and calibration tests, a committed **real-data** end-to-end test pins real
 MMLU-Redux numbers, and a manual harness (`scripts/e2e_real_data.py`) drives the
 full pipeline over 117 real sources with **24,000+ counted invariant checks**.

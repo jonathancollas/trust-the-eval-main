@@ -1,7 +1,8 @@
 from __future__ import annotations
 import json
 
-from ..artifact import EvalArtifact, EvalItem
+from ..artifact import (CANONICAL_SCHEMA_VERSION, SOURCE_RECORD_KEY,
+                        EvalArtifact, EvalItem)
 
 
 def load(path: str) -> EvalArtifact:
@@ -29,6 +30,11 @@ def load(path: str) -> EvalArtifact:
         items.append(EvalItem(question=str(prompt or ""), answer=str(gold),
                               response=(str(resp) if resp is not None else None),
                               score=(float(score) if score is not None else None),
-                              meta={k: r[k] for k in ("vars", "testIdx") if k in r}))
+                              meta={**{k: r[k] for k in ("vars", "testIdx") if k in r},
+                                    SOURCE_RECORD_KEY: r}))
     return EvalArtifact(dataset=data.get("description") or "promptfoo_eval",
-                        items=items, source_path=path, metadata={})
+                        items=items, source_path=path,
+                        metadata={"schema_version": CANONICAL_SCHEMA_VERSION,
+                                  "source_format": "promptfoo",
+                                  "source_document": {k: v for k, v in data.items()
+                                                      if k != "results"}})

@@ -48,6 +48,8 @@ def main(argv: Optional[list] = None) -> int:
     p.add_argument("--trust-report", default=None,
                    help="write a self-contained, provenance-stamped Run Trust Report (HTML)")
     p.add_argument("--json-out", default=None)
+    p.add_argument("--max-model-calls", type=int, default=None,
+                   help="hard provider-call budget; stop before exceeding it")
     p.add_argument("--port", type=int, default=8077, help="port for 'serve'")
     p.add_argument("--host", default="127.0.0.1", help="host for 'serve'")
     p.add_argument("--no-browser", action="store_true", help="don't auto-open the browser")
@@ -117,7 +119,8 @@ def main(argv: Optional[list] = None) -> int:
     artifact = _load_artifact(args.artifact)
     model = build_model(args.model)
     probe_ids = args.probes.split(",") if args.probes else None
-    rep = run_battery(artifact, model=model, probe_ids=probe_ids)
+    rep = run_battery(artifact, model=model, probe_ids=probe_ids,
+                      max_model_calls=args.max_model_calls)
 
     print(report_mod.to_console(rep))
     if args.otel_out:

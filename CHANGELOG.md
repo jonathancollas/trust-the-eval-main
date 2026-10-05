@@ -17,6 +17,17 @@ A criterion-validity study on real data (HELM v1.3.0 × MMLU-Redux, 10 models /
 - Empty or poorly covered claim audits are `not assessed` / `inconclusive`, not
   `supportable`; promptfoo is detected by schema and Inspect `scores` are retained.
 
+### Added after the audit roadmap
+- Reports now carry a versioned artifact manifest and exact probe coverage
+  (`requested`, `completed`, `skipped`, errors and stop reason). Generic JSON,
+  promptfoo and Inspect items retain their complete source record for mapping
+  audits; the canonical v1.0 contract is documented in `docs/artifact-schema.md`.
+- Model runs accept a hard `--max-model-calls` budget. The wrapper rejects the
+  call before it would exceed the limit, records the denial and stops the battery
+  with an explicit incomplete-coverage reason.
+- Calibration output is labelled **embedded-scenario conformity — not field
+  performance** and places its 38 positive / 43 negative case counts up front.
+
 ### Changed
 - `observe` now renders the **rich navigable observatory** (`observatory_ui`) as the
   live `index.html`, built from the evals just ingested; the lightweight SPA is kept
