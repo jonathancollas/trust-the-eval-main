@@ -4,7 +4,7 @@ from typing import Optional
 from ..artifact import EvalArtifact
 from ..evidence import trim
 from ..finding import Finding, Severity
-from ..grading import default_grader
+from ..grading import robust_grader
 from ..probe import ModelClient, Probe, register
 from ..sampling import subsample
 
@@ -29,8 +29,8 @@ class ModelDrift(Probe):
             if it.response is None or not it.answer.strip() or not it.question.strip():
                 continue
             n += 1
-            then_ok = default_grader(it.response, it.answer)
-            now_ok = default_grader(model.complete(it.question, temperature=0.0), it.answer)
+            then_ok = robust_grader(it.response, it.answer)
+            now_ok = robust_grader(model.complete(it.question, temperature=0.0), it.answer)
             if then_ok != now_ok:
                 changed += 1
                 rows.append({"item": idx, "question": trim(it.question),
@@ -176,7 +176,7 @@ ModelDrift.DOC = ProbeDoc(
         "fair use is comparing the same model name across time under the same "
         "protocol."
     ),
-    code_refs=["trust_the_eval.grading.default_grader",
+    code_refs=["trust_the_eval.grading.robust_grader",
                "trust_the_eval.sampling.subsample"],
 )
 

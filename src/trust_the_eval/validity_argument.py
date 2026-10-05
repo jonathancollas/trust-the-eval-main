@@ -191,8 +191,10 @@ def render_validity_argument_md(seed: int = 0) -> str:
     for pid, (facet, dual, examined, ok, bad) in CASES.items():
         c = cal.get(pid, {})
         tier = c.get("tier", "?")
+        vals = {k: (c.get(k) if c.get(k) is not None else 0.0)
+                for k in ("recall", "specificity", "precision")}
         rel = _TIER_TRUTH.get(tier, "not calibrated").format(
-            r=c.get("recall", 0), s=c.get("specificity", 0), p=c.get("precision", 0))
+            r=vals["recall"], s=vals["specificity"], p=vals["precision"])
         dual_tag = f" <br>_(dual: {dual})_" if dual else ""
         mdep = "needs model" if requires_model.get(pid) else "static"
         name = names.get(pid, pid)

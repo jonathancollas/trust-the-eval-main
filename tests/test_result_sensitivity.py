@@ -8,6 +8,8 @@ def test_kendall_and_spearman_basics():
     assert kendall_inversions(["a", "b"], ["b", "a"]) == 1
     assert spearman([1, 2, 3], [1, 2, 3]) == 1.0
     assert spearman([1, 2, 3], [3, 2, 1]) == -1.0
+    assert spearman([1, 1, 1], [1, 2, 3]) is None
+    assert spearman([1, 1, 2], [1, 2, 3]) > 0.8
 
 
 def test_no_change_is_identity():
@@ -32,13 +34,28 @@ def test_correction_can_flip_ranking():
     assert r["n_changed_items"] == 1
     assert r["ranking_orig"] == ["m1", "m2"]      # tie broken by name
     assert r["ranking_corr"] == ["m2", "m1"]      # m2 now strictly ahead
-    assert r["inversions"] == 1 and r["kendall_tau"] == -1.0
+    # A tie becoming ordered is not an inversion; it is represented by the
+    # changed top set and bootstrap probability, without name-based tie breaks.
+    assert r["inversions"] == 0 and r["kendall_tau"] is None
+    assert r["top_models_orig"] == ["m1", "m2"]
+    assert r["top_models_corr"] == ["m2"]
     assert set(r["models_moved"]) == {"m1", "m2"}
     pm = r["per_model"]
     assert abs(pm["m2"]["delta"] - 0.5) < 1e-9    # m2 +0.5
     assert pm["m2"]["delta_lo"] is not None        # bootstrap CI present
     # mechanism present on the changed item
     assert r["mechanism"]["agree_corrected_gold"] >= r["mechanism"]["agree_original_gold"]
+
+
+def test_ties_are_invariant_to_model_renaming():
+    og = {"i1": ["A"], "i2": ["A"]}
+    cg = {"i1": ["B"], "i2": ["A"]}
+    p1 = {"aaa": {"i1": "A", "i2": "B"}, "zzz": {"i1": "B", "i2": "A"}}
+    p2 = {"zzz": p1["aaa"], "aaa": p1["zzz"]}
+    a = sensitivity(p1, og, cg, iters=100, seed=3)
+    b = sensitivity(p2, og, cg, iters=100, seed=3)
+    assert a["kendall_tau"] == b["kendall_tau"]
+    assert a["p_top1_change"] == b["p_top1_change"]
 
 
 def test_severity_and_summary_helpers():

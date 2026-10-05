@@ -59,13 +59,13 @@ def test_high_from_synthetic_floor_probe_is_only_fragile():
 
 def test_medium_threat_is_fragile_and_low_is_supportable():
     assert claim_verdict("capability", [F("contamination_perturb", "medium")])["verdict"] == "fra"
-    assert claim_verdict("capability", [F("contamination_perturb", "low")])["verdict"] == "sup"
+    assert claim_verdict("capability", [F("contamination_perturb", "low")])["verdict"] == "inc"
 
 
 def test_irrelevant_probes_do_not_affect_a_claim():
     # contamination is not a judge-scored probe
     v = claim_verdict("judge-scored", [F("contamination_perturb", "high")])
-    assert v["verdict"] == "sup" and v["n_probes"] == 0
+    assert v["verdict"] == "na" and v["n_probes"] == 0
 
 
 def test_claim_verdicts_accepts_finding_objects():
@@ -73,7 +73,7 @@ def test_claim_verdicts_accepts_finding_objects():
     fs = [Finding("judge_swap", Severity.HIGH, "judge order flips outcome")]
     out = claim_verdicts(fs)
     assert out["judge-scored"]["verdict"] in ("uns", "fra")
-    assert out["capability"]["verdict"] == "sup"
+    assert out["capability"]["verdict"] == "na"
 
 
 # ----------------------------- validity-argument table -----------------------------
